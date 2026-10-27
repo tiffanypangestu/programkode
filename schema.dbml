@@ -1,0 +1,339 @@
+// ========================================================
+// DBML SCHEMA FOR DBDATAMODEL / DBDATABASE / DBDiagram.io
+// Sistem Analisis Performa Outlet & Penjualan (UD Medan)
+// ========================================================
+
+Project Sistem_Analisis_Performa_Outlet {
+  database_type: 'MySQL'
+  Note: 'Sistem Segmentasi Performa Outlet Menggunakan Metode K-Means Clustering Berdasarkan 5 Indikator Variabel (Omzet, Growth, Frekuensi, Volume Produk, Kontribusi)'
+}
+
+// --------------------------------------------------------
+// 1. MASTER DATA
+// --------------------------------------------------------
+Table wilayah {
+  wilayah_id bigint [pk, increment]
+  nama_wilayah varchar(255) [not null]
+  kode_wilayah varchar(50) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Master data wilayah operasional dan distribusi outlet'
+}
+
+Table outlet {
+  outlet_id bigint [pk, increment]
+  wilayah_id bigint [not null]
+  kode_outlet varchar(50) [unique, not null]
+  nama_outlet varchar(255) [not null]
+  alamat text
+  no_telepon varchar(20)
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Data outlet mitra penjualan UD Medan'
+}
+
+Table kategori {
+  kategori_id bigint [pk, increment]
+  nama_kategori varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Kategori kelompok produk'
+}
+
+Table produk {
+  produk_id bigint [pk, increment]
+  kategori_id bigint [not null]
+  nama_produk varchar(255) [not null]
+  harga_produk decimal(12,2)
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Katalog produk UD Medan'
+}
+
+Table harga_produk {
+  harga_produk_id bigint [pk, increment]
+  produk_id bigint [not null]
+  wilayah_id bigint [not null]
+  harga_produk decimal(15,2) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Penetapan variasi harga produk per wilayah'
+}
+
+// --------------------------------------------------------
+// 2. USER & SDM
+// --------------------------------------------------------
+Table role {
+  role_id bigint [pk, increment]
+  nama_role varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Hak akses sistem (Admin, Pimpinan, Staf)'
+}
+
+Table users {
+  user_id bigint [pk, increment]
+  role_id bigint [not null]
+  name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  password varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table karyawan {
+  karyawan_id bigint [pk, increment]
+  user_id bigint [null]
+  role_id bigint [not null]
+  nama_karyawan varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table spg {
+  spg_id bigint [pk, increment]
+  user_id bigint [null]
+  nama_spg varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Sales Promotion Girl untuk jadwal promosi'
+}
+
+Table bc {
+  bc_id bigint [pk, increment]
+  user_id bigint [null]
+  nama_bc varchar(255) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Beauty Consultant untuk jadwal promosi'
+}
+
+// --------------------------------------------------------
+// 3. TRANSAKSI & OPERASIONAL PENJUALAN
+// --------------------------------------------------------
+Table penjualan {
+  penjualan_id bigint [pk, increment]
+  outlet_id bigint [not null]
+  karyawan_id bigint [not null]
+  tanggal_penjualan date [not null]
+  total_harga decimal(15,2) [default: 0]
+  status_penjualan varchar(30) [default: 'selesai']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Pencatatan rekap penjualan bulanan per outlet'
+}
+
+Table transaksi {
+  transaksi_id bigint [pk, increment]
+  wilayah_id bigint [not null]
+  outlet_id bigint [not null]
+  karyawan_id bigint [not null]
+  nomor_transaksi varchar(50)
+  tanggal date [not null]
+  total_transaksi decimal(15,2) [default: 0]
+  tipe_transaksi varchar(50)
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table transaksi_detail {
+  transaksi_detail_id bigint [pk, increment]
+  transaksi_id bigint [not null]
+  produk_id bigint [not null]
+  harga_produk_id bigint [not null]
+  jumlah int [not null]
+  harga_satuan decimal(15,2) [not null]
+  subtotal decimal(15,2) [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Rincian item produk pada transaksi'
+}
+
+// --------------------------------------------------------
+// 4. ANALISIS PERFORMA & CLUSTERING K-MEANS
+// --------------------------------------------------------
+Table outlet_performance {
+  performa_id bigint [pk, increment]
+  outlet_id bigint [not null]
+  wilayah_id bigint [not null]
+  periode_data varchar(20) [not null, note: 'Format: YYYY-MM']
+  omzet decimal(15,2) [default: 0, note: 'Variabel 1: Total Omzet Outlet']
+  growth decimal(8,2) [default: 0, note: 'Variabel 2: Pertumbuhan Omzet MoM (%)']
+  frekuensi_transaksi int [default: 0, note: 'Variabel 3: Frekuensi Transaksi']
+  jumlah_produk_terjual int [default: 0, note: 'Variabel 4: Volume Produk Terjual']
+  kontribusi decimal(8,2) [default: 0, note: 'Variabel 5: Kontribusi terhadap Total Omzet (%)']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Hasil ekstraksi 5 variabel indikator performa outlet'
+}
+
+Table analisis_performa {
+  analisis_performa_id bigint [pk, increment]
+  periode_analisis varchar(20) [not null, note: 'Format: YYYY-MM']
+  tanggal_analisis date
+  metode varchar(50) [default: 'K-Means']
+  jumlah_cluster int [default: 3]
+  silhouette_score decimal(8,6) [note: 'Evaluasi kualitas pemisahan cluster']
+  status_analisis varchar(30) [default: 'selesai']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Log riwayat eksekusi algoritma K-Means bulanan'
+}
+
+Table cluster {
+  cluster_id bigint [pk, increment]
+  nama_cluster varchar(50) [not null, note: 'Cluster 0, Cluster 1, Cluster 2']
+  keterangan varchar(255) [note: 'Status: Ramai / Sedang / Sepi']
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Definisi profil kelompok cluster'
+}
+
+Table hasil_cluster {
+  hasil_cluster_id bigint [pk, increment]
+  performa_id bigint [not null]
+  cluster_id bigint [not null]
+  analisis_performa_id bigint
+  wilayah_id bigint [not null]
+  nilai_sillhouette decimal(8,6)
+  deskripsi_hasil text
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Pemetaan outlet ke cluster hasil analisis beserta rekomendasinya'
+}
+
+Table cluster_centroid {
+  centroid_id bigint [pk, increment]
+  cluster_id bigint [not null]
+  analisis_performa_id bigint
+  wilayah_id bigint [not null]
+  iterasi int [default: 1]
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Titik pusat centroid cluster setiap iterasi'
+}
+
+// --------------------------------------------------------
+// 5. STRATEGI & JADWAL PROMOSI
+// --------------------------------------------------------
+Table promosi {
+  promosi_id bigint [pk, increment]
+  nama_promosi varchar(255) [not null]
+  deskripsi_promosi text
+  periode_mulai date [not null]
+  periode_selesai date [not null]
+  kategori_produk varchar(255)
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Master program promosi outlet'
+}
+
+Table jadwal_promosi {
+  jadwal_promosi_id bigint [pk, increment]
+  promosi_id bigint [not null]
+  spg_id bigint
+  bc_id bigint
+  tanggal_promosi date [not null]
+  keterangan varchar(255)
+  created_at timestamp
+  updated_at timestamp
+
+  Note: 'Penjadwalan aksi promosi bagi outlet performa rendah/sedang'
+}
+
+// ========================================================
+// RELASI ANTAR ENTITAS (FOREIGN KEYS)
+// ========================================================
+
+// Master Data
+Ref: outlet.wilayah_id > wilayah.wilayah_id [delete: restrict]
+Ref: produk.kategori_id > kategori.kategori_id [delete: restrict]
+Ref: harga_produk.produk_id > produk.produk_id [delete: restrict]
+Ref: harga_produk.wilayah_id > wilayah.wilayah_id [delete: restrict]
+
+// User & SDM
+Ref: users.role_id > role.role_id [delete: restrict]
+Ref: karyawan.user_id - users.user_id [delete: null]
+Ref: karyawan.role_id > role.role_id [delete: restrict]
+Ref: spg.user_id - users.user_id [delete: null]
+Ref: bc.user_id - users.user_id [delete: null]
+
+// Transaksi & Penjualan
+Ref: penjualan.outlet_id > outlet.outlet_id [delete: restrict]
+Ref: penjualan.karyawan_id > karyawan.karyawan_id [delete: restrict]
+Ref: transaksi.wilayah_id > wilayah.wilayah_id [delete: restrict]
+Ref: transaksi.outlet_id > outlet.outlet_id [delete: restrict]
+Ref: transaksi.karyawan_id > karyawan.karyawan_id [delete: restrict]
+Ref: transaksi_detail.transaksi_id > transaksi.transaksi_id [delete: cascade]
+Ref: transaksi_detail.produk_id > produk.produk_id [delete: restrict]
+Ref: transaksi_detail.harga_produk_id > harga_produk.harga_produk_id [delete: restrict]
+
+// Analisis Performa & K-Means
+Ref: outlet_performance.outlet_id > outlet.outlet_id [delete: restrict]
+Ref: outlet_performance.wilayah_id > wilayah.wilayah_id [delete: restrict]
+Ref: hasil_cluster.performa_id - outlet_performance.performa_id [delete: restrict]
+Ref: hasil_cluster.cluster_id > cluster.cluster_id [delete: restrict]
+Ref: hasil_cluster.analisis_performa_id > analisis_performa.analisis_performa_id [delete: restrict]
+Ref: hasil_cluster.wilayah_id > wilayah.wilayah_id [delete: restrict]
+Ref: cluster_centroid.cluster_id > cluster.cluster_id [delete: cascade]
+Ref: cluster_centroid.analisis_performa_id > analisis_performa.analisis_performa_id [delete: null]
+Ref: cluster_centroid.wilayah_id > wilayah.wilayah_id [delete: restrict]
+
+// Promosi
+Ref: jadwal_promosi.promosi_id > promosi.promosi_id [delete: restrict]
+Ref: jadwal_promosi.spg_id > spg.spg_id [delete: null]
+Ref: jadwal_promosi.bc_id > bc.bc_id [delete: null]
+
+// ========================================================
+// PENGELOMPOKAN TABEL (TABLE GROUPS)
+// ========================================================
+TableGroup master_data {
+  wilayah
+  outlet
+  kategori
+  produk
+  harga_produk
+}
+
+TableGroup user_dan_sdm {
+  role
+  users
+  karyawan
+  spg
+  bc
+}
+
+TableGroup operasional_penjualan {
+  penjualan
+  transaksi
+  transaksi_detail
+}
+
+TableGroup analisis_kmeans {
+  outlet_performance
+  analisis_performa
+  cluster
+  hasil_cluster
+  cluster_centroid
+}
+
+TableGroup strategi_promosi {
+  promosi
+  jadwal_promosi
+}
