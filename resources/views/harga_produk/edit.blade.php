@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Harga Produk')
+@section('title', 'Set Harga Produk')
 
 @section('content')
     <div class="min-h-screen bg-gray-100 px-4 py-8 sm:px-6 lg:px-8">
@@ -10,18 +10,17 @@
             </a>
 
             <div class="mb-6 mt-5">
-                <h1 class="text-3xl font-bold text-gray-900">Edit Harga Produk</h1>
-                <p class="mt-2 text-sm text-gray-500">Perbarui nominal harga per wilayah.</p>
+                <h1 class="text-3xl font-bold text-gray-900">Edit Harga: {{ $produk->nama_produk }}</h1>
+                <p class="mt-2 text-sm text-gray-500">Perbarui nominal harga untuk setiap wilayah.</p>
             </div>
 
-            <form action="{{ route('harga-produk.update', $hargaProduk) }}" method="POST"
+            <form action="{{ route('harga-produk.save-set', $produk) }}" method="POST"
                 class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
                 @csrf
-                @method('PUT')
 
                 <div class="border-b border-gray-100 px-6 py-5">
-                    <h2 class="font-semibold text-gray-900">Informasi Harga</h2>
-                    <p class="mt-1 text-sm text-gray-500">Pastikan kombinasi produk dan wilayah sudah tepat.</p>
+                    <h2 class="font-semibold text-gray-900">Harga Per Wilayah</h2>
+                    <p class="mt-1 text-sm text-gray-500">Pastikan nominal harga setiap wilayah sudah tepat.</p>
                 </div>
 
                 <div class="space-y-5 p-6">
@@ -35,53 +34,41 @@
                         </div>
                     @endif
 
+                    {{-- Produk (readonly) --}}
                     <div>
-                        <label for="produk_id" class="mb-2 block text-sm font-medium text-gray-700">
-                            Produk <span class="text-red-500">*</span>
-                        </label>
-                        <select id="produk_id" name="produk_id" required
-                            class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                            <option value="">-- Pilih Produk --</option>
-                            @foreach ($produk as $item)
-                                <option value="{{ $item->produk_id }}" @selected(old('produk_id', $hargaProduk->produk_id) == $item->produk_id)>
-                                    {{ $item->nama_produk }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('produk_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
+                        <label class="mb-2 block text-sm font-medium text-gray-700">Produk</label>
+                        <div
+                            class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800">
+                            {{ $produk->nama_produk }}
+                        </div>
                     </div>
 
-                    <div>
-                        <label for="wilayah_id" class="mb-2 block text-sm font-medium text-gray-700">
-                            Wilayah <span class="text-red-500">*</span>
-                        </label>
-                        <select id="wilayah_id" name="wilayah_id" required
-                            class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                            <option value="">-- Pilih Wilayah --</option>
-                            @foreach ($wilayah as $item)
-                                <option value="{{ $item->wilayah_id }}" @selected(old('wilayah_id', $hargaProduk->wilayah_id) == $item->wilayah_id)>
-                                    {{ $item->nama_wilayah }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('wilayah_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="harga" class="mb-2 block text-sm font-medium text-gray-700">
-                            Harga (Rp) <span class="text-red-500">*</span>
-                        </label>
-                        <input type="number" id="harga" name="harga" value="{{ old('harga', $hargaProduk->harga) }}"
-                            required min="0" step="100"
-                            class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                        @error('harga')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    {{-- Input harga per wilayah --}}
+                    @foreach ($wilayah as $w)
+                        @php
+                            $existing = $hargaByWilayah[$w->wilayah_id] ?? null;
+                            $currentHarga = $existing ? (int) $existing->harga_produk : '';
+                            $fieldKey = "harga.{$w->wilayah_id}";
+                        @endphp
+                        <div>
+                            <label for="harga_{{ $w->wilayah_id }}" class="mb-2 block text-sm font-medium text-gray-700">
+                                Harga {{ $w->nama_wilayah }} (Rp)
+                                <span class="text-red-500">*</span>
+                                @if ($existing)
+                                    <span class="ml-1 text-xs font-normal text-green-600">✓ Sudah ada</span>
+                                @else
+                                    <span class="ml-1 text-xs font-normal text-amber-500">Belum diset</span>
+                                @endif
+                            </label>
+                            <input type="number" id="harga_{{ $w->wilayah_id }}" name="harga[{{ $w->wilayah_id }}]"
+                                value="{{ old($fieldKey, $currentHarga) }}" min="0" step="100"
+                                placeholder="Masukkan harga..."
+                                class="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                            @error("harga.{$w->wilayah_id}")
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endforeach
                 </div>
 
                 <div
@@ -92,7 +79,7 @@
                     </a>
                     <button type="submit"
                         class="inline-flex justify-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700">
-                        Simpan Perubahan
+                        Simpan Semua Harga
                     </button>
                 </div>
             </form>

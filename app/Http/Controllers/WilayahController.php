@@ -10,9 +10,20 @@ use Throwable;
 
 class WilayahController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $wilayah = Wilayah::orderBy('nama_wilayah')->paginate(3);
+        $query = Wilayah::query();
+
+        // logika filter pencarian
+        if ($request->filled('search')) {
+            $search = trim($request->search);
+            $query->where(function ($q) use ($search) {
+                $q->where('nama_wilayah', 'like', '%'.$search.'%')
+                    ->orWhere('deskripsi_wilayah', 'like', '%'.$search.'%');
+            });
+        }
+
+        $wilayah = $query->orderBy('nama_wilayah')->paginate(3)->withQueryString();
 
         return view('wilayah.index', compact('wilayah'));
     }

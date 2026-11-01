@@ -131,7 +131,7 @@ class OutletController extends Controller
 
             return redirect()->route('outlet.index')->with(
                 'error',
-                "Gagal menghapus outlet '{$outletNama}': " . $e->getMessage()
+                "Gagal menghapus outlet '{$outletNama}': ".$e->getMessage()
             );
         }
     }

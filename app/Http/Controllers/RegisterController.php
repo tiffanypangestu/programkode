@@ -84,6 +84,4 @@ class RegisterController extends Controller
             default => redirect()->route('dashboard')->with('success', 'Pendaftaran berhasil! '),
         };
     }
-
-    protected function validator(array $data) {}
 }

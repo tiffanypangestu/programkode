@@ -14,8 +14,8 @@
         {{-- Contoh baris transaksi pertama --}}
         <tr>
             <td>2026-10-25</td>
-            <td>TRX-001</td>
-            <td>OUT-001</td>
+            <td>TRX-0001</td>
+            <td>OUT-0001</td>
             <td>Contoh Produk A</td>
             <td>2</td>
             <td>15000</td>

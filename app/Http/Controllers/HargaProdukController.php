@@ -29,8 +29,9 @@ class HargaProdukController extends Controller
     {
         $produk = Produk::orderBy('nama_produk')->get();
         $wilayah = Wilayah::orderBy('nama_wilayah')->get();
+        $selectedProduk = request('produk_id') ? Produk::find(request('produk_id')) : null;
 
-        return view('harga_produk.create', compact('produk', 'wilayah'));
+        return view('harga_produk.create', compact('produk', 'wilayah', 'selectedProduk'));
     }
 
     /**
@@ -62,14 +63,57 @@ class HargaProdukController extends Controller
     }
 
     /**
+     * Show the form for setting/editing all prices for a product at once.
+     */
+    public function set(Produk $produk)
+    {
+        $wilayah = Wilayah::orderBy('nama_wilayah')->get();
+        $hargaByWilayah = HargaProduk::where('produk_id', $produk->produk_id)
+            ->get()
+            ->keyBy('wilayah_id');
+
+        return view('harga_produk.edit', compact('produk', 'wilayah', 'hargaByWilayah'));
+    }
+
+    /**
+     * Save all prices for a product at once (upsert per wilayah).
+     */
+    public function saveSet(Request $request, Produk $produk)
+    {
+        $wilayah = Wilayah::all();
+
+        // Build validation rules dinamis
+        $rules = [];
+        foreach ($wilayah as $w) {
+            $rules["harga.{$w->wilayah_id}"] = ['nullable', 'numeric', 'min:0', 'max:9999999999999.99'];
+        }
+
+        $validated = $request->validate($rules);
+        $hargaInput = $validated['harga'] ?? [];
+
+        foreach ($wilayah as $w) {
+            $nominal = $hargaInput[$w->wilayah_id] ?? null;
+
+            if ($nominal !== null && $nominal !== '') {
+                HargaProduk::updateOrCreate(
+                    ['produk_id' => $produk->produk_id, 'wilayah_id' => $w->wilayah_id],
+                    ['harga_produk' => $nominal]
+                );
+            }
+        }
+
+        return redirect()->route('harga-produk.index')->with('success', 'Harga produk berhasil disimpan.');
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(HargaProduk $hargaProduk)
     {
-        $produk = Produk::orderBy('nama_produk')->get();
+        $hargaProduk->load('produk');
         $wilayah = Wilayah::orderBy('nama_wilayah')->get();
 
-        return view('harga_produk.edit', compact('hargaProduk', 'produk', 'wilayah'));
+        return view('harga_produk.edit', compact('hargaProduk', 'wilayah'));
     }
 
     /**

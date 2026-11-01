@@ -209,6 +209,7 @@ class PenjualanController extends Controller
 
     public function show(Penjualan $penjualan)
     {
+
         $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
 
         $penjualan->load(['outlet', 'karyawan']);
@@ -228,9 +229,15 @@ class PenjualanController extends Controller
         $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
 
         $outlet = Outlet::orderBy('nama_outlet')->get();
+        $produk = Produk::orderBy('nama_produk')->get();
         $karyawan = Karyawan::orderBy('nama_karyawan')->get();
+        $transaksi = TransaksiDetail::orderBy('harga_satuan')->get();
+        $subtotal = TransaksiDetail::orderBy('subtotal')->get();
 
-        return view('penjualan.edit', compact('penjualan', 'outlet', 'karyawan'));
+        // harga produk json file
+        $harga_produk = $produk->pluck('harga_satuan', 'produk_id')->toJson();
+
+        return view('penjualan.edit', compact('penjualan', 'outlet', 'karyawan', 'produk', 'transaksi', 'subtotal', 'harga_produk'));
     }
 
     public function update(Request $request, Penjualan $penjualan)

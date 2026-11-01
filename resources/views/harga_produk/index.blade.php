@@ -129,7 +129,7 @@
 
                                         <td class="whitespace-nowrap px-6 py-4">
                                             <div class="flex items-center justify-center gap-2">
-                                                <a href="{{ route('harga-produk.create', ['produk_id' => $item->produk_id]) }}"
+                                                <a href="{{ route('harga-produk.set', $item->produk_id) }}"
                                                     class="rounded-lg border border-indigo-200 px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">
                                                     Set / Edit Harga
                                                 </a>

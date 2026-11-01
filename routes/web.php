@@ -92,6 +92,8 @@ Route::middleware('auth')->group(function () {
     Route::resource('produk', ProdukController::class);
 
     Route::resource('harga-produk', HargaProdukController::class);
+    Route::get('/harga-produk-set/{produk}', [HargaProdukController::class, 'set'])->name('harga-produk.set');
+    Route::post('/harga-produk-set/{produk}', [HargaProdukController::class, 'saveSet'])->name('harga-produk.save-set');
 
     Route::resource('outlet', OutletController::class);
 

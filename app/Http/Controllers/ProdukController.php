@@ -65,7 +65,7 @@ class ProdukController extends Controller
             'deskripsi_produk' => 'nullable|string',
         ]);
 
-        // Tambahkan harga_produk default 0 agar tidak melanggar aturan NOT NULL pada database
+        // Tambahkan harga_produk default 0
         $validated['harga_produk'] = 0;
 
         Produk::create($validated);
@@ -134,7 +134,7 @@ class ProdukController extends Controller
 
             return redirect()->route('produk.index')->with(
                 'error',
-                "Gagal menghapus produk '{$namaProduk}': " . $e->getMessage()
+                "Gagal menghapus produk '{$namaProduk}': ".$e->getMessage()
             );
         }
     }

@@ -10,7 +10,13 @@
             </a>
 
             <div class="mb-6 mt-5">
-                <h1 class="text-3xl font-bold text-gray-900">Tambah Harga Produk</h1>
+                <h1 class="text-3xl font-bold text-gray-900">
+                    @if ($selectedProduk)
+                        Tambah Harga: {{ $selectedProduk->nama_produk }}
+                    @else
+                        Tambah Harga Produk
+                    @endif
+                </h1>
                 <p class="mt-2 text-sm text-gray-500">Atur harga jual produk per wilayah.</p>
             </div>
 
@@ -38,23 +44,33 @@
                         </div>
                     @endif
 
-                    <div>
-                        <label for="produk_id" class="mb-2 block text-sm font-medium text-gray-700">
-                            Produk <span class="text-red-500">*</span>
-                        </label>
-                        <select id="produk_id" name="produk_id" required
-                            class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
-                            <option value="">-- Pilih Produk --</option>
-                            @foreach ($produk as $item)
-                                <option value="{{ $item->produk_id }}" @selected(old('produk_id') == $item->produk_id)>
-                                    {{ $item->nama_produk }}
-                                </option>
-                            @endforeach
-                        </select>
-                        @error('produk_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
+                    @if ($selectedProduk)
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-gray-700">Produk</label>
+                            <div class="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-800">
+                                {{ $selectedProduk->nama_produk }}
+                            </div>
+                            <input type="hidden" name="produk_id" value="{{ $selectedProduk->produk_id }}">
+                        </div>
+                    @else
+                        <div>
+                            <label for="produk_id" class="mb-2 block text-sm font-medium text-gray-700">
+                                Produk <span class="text-red-500">*</span>
+                            </label>
+                            <select id="produk_id" name="produk_id" required
+                                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-100">
+                                <option value="">-- Pilih Produk --</option>
+                                @foreach ($produk as $item)
+                                    <option value="{{ $item->produk_id }}" @selected(old('produk_id') == $item->produk_id)>
+                                        {{ $item->nama_produk }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('produk_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    @endif
 
                     {{-- Bagian Pilih Wilayah --}}
                     <div>

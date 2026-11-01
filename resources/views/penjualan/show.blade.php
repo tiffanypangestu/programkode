@@ -26,10 +26,10 @@
                         <p class="text-gray-500 text-xs mt-0.5">
                             {{ $penjualan->outlet->alamat_outlet ?? 'Alamat tidak dicantumkan' }}</p>
                     </div>
-                    <div>
+                    {{-- <div>
                         <p class="text-xs font-semibold text-gray-400 uppercase">Penanggung Jawab</p>
                         <p class="font-medium text-gray-800">{{ $penjualan->karyawan->nama_karyawan ?? '-' }}</p>
-                    </div>
+                    </div> --}}
                 </div>
 
                 <div class="border-t border-gray-100 pt-4">
@@ -45,10 +45,10 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
-                                @foreach ($penjualan->details ?? [] as $detail)
+                                @foreach ($transaksiDetails as $detail)
                                     <tr>
                                         <td class="px-4 py-3 font-medium text-gray-900">
-                                            {{ $detail->produk->nama_produk ?? '-' }}</td>
+                                            {{ $detail->nama_produk ?? '-' }}</td>
                                         <td class="px-4 py-3 text-center text-gray-600">{{ $detail->jumlah }}</td>
                                         <td class="px-4 py-3 text-right text-gray-600">Rp
                                             {{ number_format($detail->harga_satuan, 0, ',', '.') }}</td>

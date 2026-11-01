@@ -107,7 +107,7 @@
                     </div>
                     <h3 class="mt-2 text-base font-bold text-gray-800">Evaluasi Inertia (WCSS)</h3>
                     <p class="mt-1 text-xs text-gray-500">
-                        Penentuan titik siku (elbow point) berbasis penurunan jarak inersia antar cluster.
+                        Penentuan titik siku (elbow point).
                     </p>
                 </div>
                 <div class="mt-4 h-64">
