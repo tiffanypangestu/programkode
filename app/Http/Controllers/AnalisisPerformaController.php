@@ -131,7 +131,7 @@ class AnalisisPerformaController extends Controller
         ]);
     }
 
-    // function hitung indikator
+    // function hitung 5 indikator
     private function hitungIndikator(string $periode_analisis)
     {
         $periode_lalu = Carbon::parse($periode_analisis)->subMonth();
@@ -144,29 +144,39 @@ class AnalisisPerformaController extends Controller
 
         // total omzet perusahaan: rumus kontribusi
         $total_omzet = DB::table('penjualan')->whereMonth('tanggal_penjualan', $bulan_sekarang)->whereYear('tanggal_penjualan', $tahun_sekarang)->sum('total_harga');
-
         $total_omzet = $total_omzet > 0 ? $total_omzet : 1;
 
         // omzet bulan lalu untuk kalkulasi growth
         $omzet_bulan_lalu_per_outlet = DB::table('penjualan')->select('outlet_id', DB::raw('SUM(total_harga) as total_omzet_bulan_lalu'))->whereMonth('tanggal_penjualan', $bulan_lalu)->whereYear('tanggal_penjualan', $tahun_lalu)->groupBy('outlet_id')->pluck('total_omzet_bulan_lalu', 'outlet_id');
 
         // data indikator bulan ini
+        // Omzet & frekuensi langsung dari tabel penjualan (total_harga sudah benar per transaksi)
         $data_outlet = DB::table('outlet')
             ->leftJoin('penjualan', function ($join) use ($bulan_sekarang, $tahun_sekarang) {
-                $join->on('outlet.outlet_id', '=', 'penjualan.outlet_id')->whereMonth('penjualan.tanggal_penjualan', '=', $bulan_sekarang)->whereYear('penjualan.tanggal_penjualan', '=', $tahun_sekarang);
+                $join->on('outlet.outlet_id', '=', 'penjualan.outlet_id')
+                    ->whereMonth('penjualan.tanggal_penjualan', '=', $bulan_sekarang)
+                    ->whereYear('penjualan.tanggal_penjualan', '=', $tahun_sekarang);
             })
-            ->leftJoin('transaksi_detail', 'penjualan.penjualan_id', '=', 'transaksi_detail.transaksi_id')
             ->select(
                 'outlet.outlet_id as id_outlet',
                 'outlet.nama_outlet',
                 DB::raw('COALESCE(SUM(penjualan.total_harga), 0) as omzet'),
-                DB::raw('COUNT(DISTINCT penjualan.penjualan_id) as frekuensi'),
-                DB::raw('COALESCE(SUM(transaksi_detail.jumlah), 0) as jumlah_produk')
+                DB::raw('COUNT(DISTINCT penjualan.penjualan_id) as frekuensi')
             )
             ->groupBy('outlet.outlet_id', 'outlet.nama_outlet')
             ->get();
 
-        return $data_outlet->map(function ($item) use ($omzet_bulan_lalu_per_outlet, $total_omzet) {
+        // Hitung jumlah_produk: transaksi → transaksi_detail
+        $jumlah_produk_per_outlet = DB::table('penjualan')
+            ->join('transaksi', 'transaksi.nomor_transaksi', '=', DB::raw("CONCAT('TR-', penjualan.penjualan_id)"))
+            ->join('transaksi_detail', 'transaksi_detail.transaksi_id', '=', 'transaksi.transaksi_id')
+            ->whereMonth('penjualan.tanggal_penjualan', $bulan_sekarang)
+            ->whereYear('penjualan.tanggal_penjualan', $tahun_sekarang)
+            ->select('penjualan.outlet_id', DB::raw('COALESCE(SUM(transaksi_detail.jumlah), 0) as jumlah_produk'))
+            ->groupBy('penjualan.outlet_id')
+            ->pluck('jumlah_produk', 'outlet_id');
+
+        return $data_outlet->map(function ($item) use ($omzet_bulan_lalu_per_outlet, $total_omzet, $jumlah_produk_per_outlet) {
             $omzet_sekarang = (float) $item->omzet;
             $omzet_lalu = (float) ($omzet_bulan_lalu_per_outlet[$item->id_outlet] ?? 0);
 
@@ -186,7 +196,7 @@ class AnalisisPerformaController extends Controller
                 'growth' => round($growth, 2),
                 'kontribusi' => round($kontribusi, 2),
                 'frekuensi' => (float) $item->frekuensi,
-                'jumlah_produk' => (int) $item->jumlah_produk,
+                'jumlah_produk' => (int) ($jumlah_produk_per_outlet[$item->id_outlet] ?? 0),
             ];
         })->toArray();
     }

@@ -7,7 +7,7 @@ class DataOutlet(BaseModel):
   growth: float = 0.0
   kontribusi: float = 0.0
   frekuensi: float = 0.0
-  jumlah_produk: int = 0.0
+  jumlah_produk: int = 0
 
 class RequestCluster(BaseModel):
   periode: str
