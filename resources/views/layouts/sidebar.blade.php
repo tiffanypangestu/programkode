@@ -1,6 +1,13 @@
-<aside class="flex h-screen w-64 flex-col border-r border-gray-300 bg-white">
-    <div class="flex h-16 items-center border-b border-gray-100 px-6">
+<aside id="sidebar"
+    class="fixed inset-y-0 left-0 z-50 flex h-screen w-64 flex-col border-r border-gray-300 bg-white shadow-xl lg:shadow-none transition-transform duration-300 ease-in-out -translate-x-full lg:static lg:translate-x-0 shrink-0">
+    <div class="flex h-16 items-center justify-between border-b border-gray-100 px-6">
         <h1 class="text-xl font-bold text-green-700">UD Medan</h1>
+        <button id="sidebar-close-btn" type="button" aria-label="Tutup Menu"
+            class="lg:hidden rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 focus:outline-none">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        </button>
     </div>
 
     <nav class="flex-1 space-y-6 overflow-y-auto p-4">

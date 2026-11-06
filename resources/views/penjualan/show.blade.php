@@ -19,7 +19,7 @@
                     </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4 text-sm">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                     <div>
                         <p class="text-xs font-semibold text-gray-400 uppercase">Outlet</p>
                         <p class="font-bold text-gray-900">{{ $penjualan->outlet->nama_outlet ?? '-' }}</p>

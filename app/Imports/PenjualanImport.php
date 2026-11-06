@@ -45,6 +45,11 @@ class PenjualanImport implements ToCollection, WithHeadingRow
             $kode_outlet = trim((string) ($row['kode_outlet'] ?? ''));
             $nama_produk = trim((string) ($row['nama_produk'] ?? ''));
 
+            // Lewati baris kosong atau baris summary/total
+            if ($nomor === '' && $kode_outlet === '' && $nama_produk === '') {
+                continue;
+            }
+
             if ($nomor === '' || $kode_outlet === '' || $nama_produk === '' || ! isset($row['tanggal'], $row['jumlah'], $row['harga_satuan'])) {
                 $errors[] = "Baris {$baris_excel}: terdapat kolom wajib yang kosong";
             }

@@ -32,17 +32,6 @@
                 <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                     <p class="text-sm text-gray-500">Total Produk</p>
                     <p class="mt-2 text-3xl font-bold text-gray-900">{{ $total_produk }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Seluruh produk terdaftar</p>
-                </div>
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">Halaman Saat Ini</p>
-                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ $produk->currentPage() }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Dari {{ $produk->lastPage() }} halaman</p>
-                </div>
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">Produk Ditampilkan</p>
-                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ $produk->count() }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Pada halaman ini (dari {{ $produk->total() }} hasil)</p>
                 </div>
             </div>
 

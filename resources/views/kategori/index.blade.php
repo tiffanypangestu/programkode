@@ -32,17 +32,6 @@
                 <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                     <p class="text-sm text-gray-500">Total Kategori</p>
                     <p class="mt-2 text-3xl font-bold text-gray-900">{{ $kategori->total() }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Seluruh kategori terdaftar</p>
-                </div>
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">Halaman Saat Ini</p>
-                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ $kategori->currentPage() }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Dari {{ $kategori->lastPage() }} halaman</p>
-                </div>
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <p class="text-sm text-gray-500">Kategori Ditampilkan</p>
-                    <p class="mt-2 text-3xl font-bold text-gray-900">{{ $kategori->count() }}</p>
-                    <p class="mt-1 text-xs text-gray-400">Pada halaman ini</p>
                 </div>
             </div>
 

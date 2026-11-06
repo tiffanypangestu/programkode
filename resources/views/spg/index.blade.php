@@ -44,25 +44,6 @@
                 <p class="mt-2 text-3xl font-bold text-gray-900">
                     {{ $spg->total() }}
                 </p>
-                <p class="mt-1 text-xs text-gray-400">Seluruh data karyawan</p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Halaman Saat Ini</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ $spg->currentPage() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">
-                    Dari {{ $spg->lastPage() }} halaman
-                </p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Data Ditampilkan</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ $spg->count() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">Pada halaman ini</p>
             </div>
         </div>
 
@@ -156,7 +137,7 @@
 
                                     {{-- Nomor Telepon --}}
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                                        {{ $item->nomor_telepon ?? $item->user->nomor_telepon ?? '-' }}
+                                        {{ $item->nomor_telepon ?? ($item->user->nomor_telepon ?? '-') }}
                                     </td>
 
                                     {{-- Aksi --}}

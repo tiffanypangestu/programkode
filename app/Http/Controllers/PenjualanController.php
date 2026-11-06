@@ -23,7 +23,7 @@ class PenjualanController extends Controller
      */
     private function authorizeRoles(array $roles): void
     {
-        $user = request()->user();
+        $user = Auth::user() ?? request()->user();
         $namaRole = strtolower($user?->role?->nama_role ?? '');
 
         $roleAliases = [
@@ -41,20 +41,34 @@ class PenjualanController extends Controller
         abort_unless($isAllowed, 403, 'Anda tidak memiliki hak akses!');
     }
 
-    public function index()
+    public function index(Request $request)
     {
+
+        // sorting
+        // $sort = in_array(strtolower($)
+
         $user = Auth::user();
         $query = Penjualan::with(['outlet', 'karyawan']);
 
         $namaRole = $user->role?->nama_role ?? '';
+        $karyawan = $user->karyawan;
+
         if (in_array($namaRole, ['Sales Promotion Girl', 'SPG'])) {
-            $query->where('karyawan_id', $user->karyawan_id);
+            if ($karyawan) {
+                $query->where('karyawan_id', $karyawan->karyawan_id);
+            }
         } elseif ($namaRole === 'Supervisor') {
-            $query->whereHas('outlet', function ($q) use ($user) {
-                $q->where('wilayah_id', $user->wilayah_id);
-            });
+            if ($user->wilayah_id ?? null) {
+                $query->whereHas('outlet', function ($q) use ($user) {
+                    $q->where('wilayah_id', $user->wilayah_id);
+                });
+            }
         } elseif (in_array($namaRole, ['Beauty Consultant', 'BC'])) {
-            $query->whereIn('outlet_id', $user->outletids ?? []);
+            if ($karyawan && $karyawan->outlets()->exists()) {
+                $query->whereIn('outlet_id', $karyawan->outlets()->pluck('outlet.outlet_id'));
+            } elseif ($karyawan) {
+                $query->where('karyawan_id', $karyawan->karyawan_id);
+            }
         }
 
         $penjualan = $query->latest()->paginate(10);
@@ -85,9 +99,41 @@ class PenjualanController extends Controller
 
     public function create()
     {
-        $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
-        $outlet = Outlet::orderBy('nama_outlet')->get();
-        $produk = Produk::orderBy('nama_produk')->get();
+        $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG', 'Beauty Consultant', 'Sales Promotion Girl']);
+
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+
+        // Auto-create karyawan jika belum terhubung
+        $karyawanLogin = Karyawan::firstOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'role_id' => $user->role_id,
+                'nama_karyawan' => $user->nama_lengkap ?? $user->name,
+                'jabatan' => $user->role?->nama_role ?? 'Sales Promotion Girl',
+                'nomor_telepon' => $user->nomor_telepon,
+                'tahun_masuk' => (int) date('Y'),
+            ]
+        );
+
+        // Admin & Supervisor dapat lihat semua outlet
+        $isAdmin = in_array($namaRole, ['admin', 'supervisor']);
+
+        if ($isAdmin) {
+            $outlet = Outlet::with('wilayah')->orderBy('nama_outlet')->get();
+            $outletTugasKhusus = false;
+        } else {
+            // Ambil outlet yang ditugaskan ke karyawan login
+            $outlet = $karyawanLogin->outlets()->with('wilayah')->orderBy('nama_outlet')->get();
+            $outletTugasKhusus = $outlet->isNotEmpty();
+
+            // Jika belum ada penugasan khusus, tampilkan semua outlet aktif
+            if ($outlet->isEmpty()) {
+                $outlet = Outlet::with('wilayah')->orderBy('nama_outlet')->get();
+            }
+        }
+
+        $produk = Produk::with('kategori')->orderBy('nama_produk')->get();
 
         $daftarHarga = DB::table('harga_produk')->orderByDesc('harga_produk_id')->get()
             ->unique(function ($item) {
@@ -96,7 +142,7 @@ class PenjualanController extends Controller
 
         $karyawan = Karyawan::orderBy('nama_karyawan')->get();
 
-        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'daftarHarga'));
+        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin'));
     }
 
     public function store(Request $request)
@@ -137,35 +183,61 @@ class PenjualanController extends Controller
                 ->first();
 
             if (! $hargaProduk) {
-                $namaProduk = DB::table('produk')->where('produk_id', $produkId)->value('nama_produk') ?? "ID: {$produkId}";
+                // Cari harga dasar produk atau dari input form
+                $produkRow = DB::table('produk')->where('produk_id', $produkId)->first();
+                $basePrice = (float) ($produkRow->harga_produk ?? 0);
+                if ($basePrice <= 0 && isset($request->harga_satuan[$index])) {
+                    $basePrice = (float) $request->harga_satuan[$index];
+                }
+                if ($basePrice <= 0) {
+                    $basePrice = 50000;
+                }
 
-                return back()->withInput()->withErrors([
-                    'produk_id' => "Harga produk \"{$namaProduk}\" belum tersedia untuk wilayah outlet yang dipilih. Silakan tambahkan harga terlebih dahulu.",
+                // Otomatis buat entri harga_produk untuk wilayah outlet ini agar foreign key terpenuhi
+                $hargaProdukId = DB::table('harga_produk')->insertGetId([
+                    'produk_id' => $produkId,
+                    'wilayah_id' => $outlet->wilayah_id,
+                    'harga_produk' => $basePrice,
+                    'tanggal_mulai' => '2026-01-01',
+                    'tanggal_berakhir' => null,
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
+
+                $hargaSatuan = $basePrice;
+            } else {
+                $hargaSatuan = (float) $hargaProduk->harga_produk;
+                $hargaProdukId = $hargaProduk->harga_produk_id;
             }
-            $hargaSatuan = $hargaProduk ? (float) $hargaProduk->harga_produk : 0;
-            $total_harga += (float) $hargaProduk->harga_produk * $quantity;
+
+            $total_harga += $hargaSatuan * $quantity;
 
             $items_to_insert[] = [
                 'produk_id' => $produkId,
                 'jumlah' => $quantity,
-                'harga_produk_id' => $hargaProduk->harga_produk_id,
+                'harga_produk_id' => $hargaProdukId,
                 'harga_satuan' => $hargaSatuan,
                 'subtotal' => $hargaSatuan * $quantity,
             ];
         }
 
-        // 2. Cari data karyawan berdasarkan user yang login
+        // 2. Buat otomatis data login
         $user = Auth::user();
 
-        $karyawan = Karyawan::where('user_id', $user->user_id)->first();
+        $karyawan = Karyawan::firstOrCreate(
+            ['user_id' => $user->user_id],
+            [
+                'role_id' => $user->role_id,
+                'nama_karyawan' => $user->nama_lengkap ?? $user->name,
+                'jabatan' => $user->role?->nama_role ?? 'Sales Promotion Girl',
+                'nomor_telepon' => $user->nomor_telepon,
+                'tahun_masuk' => (int) date('Y'),
+            ]
+        );
 
-        if (! $karyawan) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'karyawan_id' => 'Akun Anda belum terhubung dengan data karyawan. Hubungkan akun melalui data karyawan terlebih dahulu.',
-                ]);
+        // Selalu hubungkan outlet ke karyawan jika belum ada penugasan
+        if ($karyawan->outlets()->count() === 0) {
+            $karyawan->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
         }
 
         $karyawanId = $karyawan->karyawan_id;
@@ -226,35 +298,157 @@ class PenjualanController extends Controller
 
     public function edit(Penjualan $penjualan)
     {
-        $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
+        $this->authorizeRoles([
+            'Admin', 'Supervisor', 'BC', 'SPG',
+            'Beauty Consultant', 'Sales Promotion Girl',
+        ]);
 
         $outlet = Outlet::orderBy('nama_outlet')->get();
         $produk = Produk::orderBy('nama_produk')->get();
         $karyawan = Karyawan::orderBy('nama_karyawan')->get();
-        $transaksi = TransaksiDetail::orderBy('harga_satuan')->get();
-        $subtotal = TransaksiDetail::orderBy('subtotal')->get();
 
-        // harga produk json file
-        $harga_produk = $produk->pluck('harga_satuan', 'produk_id')->toJson();
+        $daftarHarga = DB::table('harga_produk')
+            ->orderByDesc('harga_produk_id')
+            ->get();
 
-        return view('penjualan.edit', compact('penjualan', 'outlet', 'karyawan', 'produk', 'transaksi', 'subtotal', 'harga_produk'));
+        $transaksi = Transaksi::where('nomor_transaksi', 'TR-'.$penjualan->penjualan_id)->first();
+        if ($transaksi) {
+            $transaksiDetails = TransaksiDetail::where('transaksi_id', $transaksi->transaksi_id)->get();
+        } else {
+            $transaksiDetails = TransaksiDetail::where('transaksi_id', $penjualan->penjualan_id)->get();
+        }
+
+        $harga_produk = $produk->pluck('harga_produk', 'produk_id')->toJson();
+
+        return view('penjualan.edit', compact(
+            'penjualan',
+            'outlet',
+            'karyawan',
+            'produk',
+            'daftarHarga',
+            'transaksiDetails',
+            'harga_produk'
+        ));
     }
 
     public function update(Request $request, Penjualan $penjualan)
     {
-        $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
+        $this->authorizeRoles([
+            'Admin', 'Supervisor', 'BC', 'SPG',
+            'Beauty Consultant', 'Sales Promotion Girl',
+        ]);
 
         $validated = $request->validate([
             'outlet_id' => ['required', 'integer', 'exists:outlet,outlet_id'],
-            'karyawan_id' => ['required', 'integer', 'exists:karyawan,karyawan_id'],
             'tanggal_penjualan' => ['required', 'date'],
-            'total_harga' => ['required', 'numeric', 'min:0'],
+            'karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
             'status_penjualan' => ['nullable', 'string', 'max:30'],
+            'produk_id' => ['required', 'array', 'min:1'],
+            'produk_id.*' => ['required', 'integer', 'exists:produk,produk_id'],
+            'jumlah' => ['required', 'array', 'min:1'],
+            'jumlah.*' => ['required', 'integer', 'min:1'],
         ]);
 
-        $validated['status_penjualan'] = $validated['status_penjualan'] ?? 'selesai';
+        $outlet = Outlet::findOrFail($validated['outlet_id']);
+        $total_harga = 0;
+        $tanggalPenjualan = Carbon::parse($validated['tanggal_penjualan'])->toDateString();
+        $items_to_insert = [];
 
-        $penjualan->update($validated);
+        foreach ($validated['produk_id'] as $index => $produkId) {
+            $quantity = (int) $validated['jumlah'][$index];
+            $hargaProduk = DB::table('harga_produk')
+                ->where('produk_id', $produkId)
+                ->where('wilayah_id', $outlet->wilayah_id)
+                ->where(function ($query) use ($tanggalPenjualan) {
+                    $query->whereNull('tanggal_mulai')->orWhereDate('tanggal_mulai', '<=', $tanggalPenjualan);
+                })
+                ->where(function ($query) use ($tanggalPenjualan) {
+                    $query->whereNull('tanggal_berakhir')->orWhereDate('tanggal_berakhir', '>=', $tanggalPenjualan);
+                })
+                ->orderByDesc('harga_produk_id')
+                ->first();
+
+            if (! $hargaProduk) {
+                $formHarga = isset($request->harga_satuan[$index]) ? (float) $request->harga_satuan[$index] : 0;
+                $defaultProdukHarga = (float) (DB::table('produk')->where('produk_id', $produkId)->value('harga_produk') ?? 0);
+                $fallbackHarga = $formHarga > 0 ? $formHarga : $defaultProdukHarga;
+
+                if ($fallbackHarga > 0) {
+                    $hargaSatuan = $fallbackHarga;
+                    $hargaProdukId = null;
+                } else {
+                    $namaProduk = DB::table('produk')->where('produk_id', $produkId)->value('nama_produk') ?? "ID: {$produkId}";
+
+                    return back()->withInput()->withErrors([
+                        'produk_id' => "Harga produk \"{$namaProduk}\" belum tersedia untuk wilayah outlet yang dipilih. Silakan tambahkan harga terlebih dahulu.",
+                    ]);
+                }
+            } else {
+                $hargaSatuan = (float) $hargaProduk->harga_produk;
+                $hargaProdukId = $hargaProduk->harga_produk_id;
+            }
+
+            $subtotal = $hargaSatuan * $quantity;
+            $total_harga += $subtotal;
+
+            $items_to_insert[] = [
+                'produk_id' => $produkId,
+                'jumlah' => $quantity,
+                'harga_produk_id' => $hargaProdukId,
+                'harga_satuan' => $hargaSatuan,
+                'subtotal' => $subtotal,
+            ];
+        }
+
+        DB::transaction(function () use ($penjualan, $validated, $outlet, $total_harga, $items_to_insert) {
+            $karyawanId = $validated['karyawan_id'] ?? $penjualan->karyawan_id;
+
+            // 1. Update Penjualan
+            $penjualan->update([
+                'outlet_id' => $validated['outlet_id'],
+                'karyawan_id' => $karyawanId,
+                'tanggal_penjualan' => $validated['tanggal_penjualan'],
+                'total_harga' => $total_harga,
+                'status_penjualan' => $validated['status_penjualan'] ?? $penjualan->status_penjualan ?? 'selesai',
+            ]);
+
+            // 2. Cari atau Buat Transaksi
+            $nomorTransaksi = 'TR-'.$penjualan->penjualan_id;
+            $transaksi = Transaksi::firstOrCreate(
+                ['nomor_transaksi' => $nomorTransaksi],
+                [
+                    'wilayah_id' => $outlet->wilayah_id,
+                    'outlet_id' => $outlet->outlet_id,
+                    'karyawan_id' => $karyawanId,
+                    'tanggal' => $validated['tanggal_penjualan'],
+                    'total_transaksi' => $total_harga,
+                    'tipe_transaksi' => 'penjualan',
+                ]
+            );
+
+            $transaksi->update([
+                'wilayah_id' => $outlet->wilayah_id,
+                'outlet_id' => $outlet->outlet_id,
+                'karyawan_id' => $karyawanId,
+                'tanggal' => $validated['tanggal_penjualan'],
+                'total_transaksi' => $total_harga,
+                'tipe_transaksi' => 'penjualan',
+            ]);
+
+            // 3. Update Detail Transaksi
+            TransaksiDetail::where('transaksi_id', $transaksi->transaksi_id)->delete();
+
+            foreach ($items_to_insert as $item) {
+                TransaksiDetail::create([
+                    'transaksi_id' => $transaksi->transaksi_id,
+                    'produk_id' => $item['produk_id'],
+                    'jumlah' => $item['jumlah'],
+                    'harga_produk_id' => $item['harga_produk_id'],
+                    'harga_satuan' => $item['harga_satuan'],
+                    'subtotal' => $item['subtotal'],
+                ]);
+            }
+        });
 
         return redirect()
             ->route('penjualan.index')
@@ -297,6 +491,13 @@ class PenjualanController extends Controller
 
     public function downloadTemplate()
     {
+        $filePath = public_path('contoh_data_penjualan_2025.xlsx');
+        if (file_exists($filePath)) {
+            return response()->download($filePath, 'contoh_data_penjualan_2025.xlsx', [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ]);
+        }
+
         return Excel::download(new TemplatePenjualanExport, 'template_import_penjualan.xlsx');
     }
 }

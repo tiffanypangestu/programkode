@@ -31,4 +31,13 @@ class Outlet extends Model
     {
         return $this->hasMany(OutletPerformance::class, 'outlet_id', 'outlet_id');
     }
+
+    /**
+     * Karyawan yang bertugas di outlet ini.
+     */
+    public function karyawans()
+    {
+        return $this->belongsToMany(Karyawan::class, 'karyawan_outlet', 'outlet_id', 'karyawan_id')
+                    ->withTimestamps();
+    }
 }

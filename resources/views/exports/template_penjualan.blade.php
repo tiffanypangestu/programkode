@@ -11,36 +11,51 @@
         </tr>
     </thead>
     <tbody>
-        {{-- Contoh baris transaksi pertama --}}
+        {{-- Contoh baris transaksi tahun 2025 sesuai database UD Medan --}}
         <tr>
-            <td>2026-10-25</td>
-            <td>TRX-0001</td>
-            <td>OUT-0001</td>
-            <td>Contoh Produk A</td>
+            <td>2025-01-15</td>
+            <td>TRX-2025-0001</td>
+            <td>20001</td>
+            <td>Acne Cream</td>
+            <td>5</td>
+            <td>55000</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>2025-01-15</td>
+            <td>TRX-2025-0001</td>
+            <td>20001</td>
+            <td>Acne Lotion 120 ml</td>
+            <td>3</td>
+            <td>58000</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>2025-01-28</td>
+            <td>TRX-2025-0002</td>
+            <td>10001</td>
+            <td>Acne Cream</td>
+            <td>4</td>
+            <td>48000</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>2025-02-10</td>
+            <td>TRX-2025-0003</td>
+            <td>30001</td>
+            <td>Acne Cream</td>
             <td>2</td>
-            <td>15000</td>
+            <td>60500</td>
             <td></td>
         </tr>
         <tr>
-            <td>2026-10-25</td>
-            <td>TRX-001</td>
-            <td>OUT-001</td>
-            <td>Contoh Produk B</td>
-            <td>1</td>
-            <td>25000</td>
+            <td>2025-02-10</td>
+            <td>TRX-2025-0003</td>
+            <td>30001</td>
+            <td>Acne Serum 20 ml</td>
+            <td>6</td>
+            <td>99500</td>
             <td></td>
         </tr>
-        {{-- Baris kosong tambahan --}}
-        @for ($i = 1; $i <= 8; $i++)
-            <tr>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-            </tr>
-        @endfor
     </tbody>
 </table>

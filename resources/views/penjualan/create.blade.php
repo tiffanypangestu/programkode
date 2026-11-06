@@ -3,7 +3,7 @@
 @section('title', 'Tambah Penjualan')
 
 @section('content')
-    <div class="min-h-screen bg-gray-100 px-4-py-8 sm:px-6 lg:px-8">
+    <div class="min-h-screen bg-gray-100 px-4 py-8 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
             <a href="{{ route('penjualan.index') }}" class="text-sm font-medium text-black hover:text-blue-600">
                 Kembali ke Data Penjualan
@@ -42,16 +42,27 @@
                         </div>
 
                         <div>
-                            <label for="outlet_id" class="block text-sm font-medium text-gray-700 mb-1">Pilih Outlet <span
-                                    class="text-red-600">*</span></label>
+                            <label for="outlet_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Pilih Outlet Tempat Bertugas
+                                @if (!empty($outletTugasKhusus))
+                                    <span
+                                        class="ml-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">Outlet
+                                        Tugas Anda</span>
+                                @endif
+                                <span class="text-red-600">*</span>
+                            </label>
                             <select name="outlet_id" id="outlet_id" required onchange="updateAlamatOutlet()"
                                 class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
-                                <option value="">---Pilih Outlet---</option>
+                                @if ($outlet->count() > 1)
+                                    <option value="">--- Pilih Outlet Tempat Bertugas ---</option>
+                                @endif
 
                                 @foreach ($outlet as $out)
                                     <option value="{{ $out->outlet_id }}"
-                                        data-alamat="{{ $out->alamat_outlet ?? 'Alamat Tidak Tersedia' }}">
+                                        data-alamat="{{ $out->alamat_outlet ?? 'Alamat Tidak Tersedia' }}"
+                                        @selected($outlet->count() === 1 || old('outlet_id') == $out->outlet_id)>
                                         {{ $out->nama_outlet }}
+                                        ({{ $out->wilayah->nama_wilayah ?? 'Wilayah ' . $out->wilayah_id }})
                                     </option>
                                 @endforeach
                             </select>
@@ -80,7 +91,7 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse" id="tabel_produk">
+                        <table class="min-w-[550px] w-full text-left border-collapse" id="tabel_produk">
                             <thead>
                                 <tr class="border-b border-gray-200 text-xs uppercase text-gray-500">
                                     <th class="py-2 px-2 w-5/12">Produk</th>
@@ -98,7 +109,7 @@
                                             class="produk-select w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
                                             <option value="">-- Pilih Produk --</option>
                                             @foreach ($produk as $p)
-                                                <option value="{{ $p->produk_id }}">
+                                                <option value="{{ $p->produk_id }}" data-nama="{{ $p->nama_produk }}">
                                                     {{ $p->nama_produk }}
                                                 </option>
                                             @endforeach
@@ -154,12 +165,12 @@
                 })->values());
 
         // Debug: tampilkan data di console (bisa dihapus setelah beres)
-        console.log('[Debug] daftarHarga:', daftarHarga);
-        console.log('[Debug] daftarOutlet:', daftarOutlet);
-
+        //         // 
 
         function ambilWilayahOutlet() {
-            const outletId = Number(document.getElementById('outlet_id').value);
+            const select = document.getElementById('outlet_id');
+            if (!select) return null;
+            const outletId = Number(select.value);
 
             const outlet = daftarOutlet.find(
                 item => Number(item.outlet_id) === outletId
@@ -168,24 +179,35 @@
             return outlet ? Number(outlet.wilayah_id) : null;
         }
 
-        function ambilHargaProduk(produkId) {
+        function ambilHargaProduk(produkId, optionEl) {
             const wilayahId = ambilWilayahOutlet();
             const tanggal = document.getElementById('tanggal_penjualan').value;
 
-            if (!wilayahId || !produkId || !tanggal) {
+            if (!produkId) {
                 return 0;
             }
 
-            const harga = daftarHarga.find(item =>
-                Number(item.produk_id) === Number(produkId) &&
-                Number(item.wilayah_id) === wilayahId &&
-                (!item.tanggal_mulai || item.tanggal_mulai <= tanggal) &&
-                (!item.tanggal_berakhir || item.tanggal_berakhir >= tanggal)
-            );
+            let hargaItem = null;
+            if (wilayahId && tanggal) {
+                hargaItem = daftarHarga.find(item =>
+                    Number(item.produk_id) === Number(produkId) &&
+                    Number(item.wilayah_id) === wilayahId &&
+                    (!item.tanggal_mulai || item.tanggal_mulai <= tanggal) &&
+                    (!item.tanggal_berakhir || item.tanggal_berakhir >= tanggal)
+                );
+            }
 
-            console.log('[Debug] Cari harga: produk_id=' + produkId + ', wilayah_id=' + wilayahId + ', tanggal=' + tanggal + ' => ' + (harga ? harga.harga_produk : 'tidak ditemukan'));
+            if (hargaItem && Number(hargaItem.harga_produk) > 0) {
+                return Number(hargaItem.harga_produk);
+            }
 
-            return harga ? Number(harga.harga_produk) : 0;
+            // Fallback ke base price produk jika ada
+            if (optionEl && optionEl.dataset && optionEl.dataset.basePrice) {
+                const bp = Number(optionEl.dataset.basePrice);
+                if (bp > 0) return bp;
+            }
+
+            return 0;
         }
 
 
@@ -193,21 +215,37 @@
             return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
 
-        // Update Alamat Outlet
-
+        // Update Alamat Outlet & Perbarui Tampilan Harga Produk pada Opsi Pilihan
         function updateAlamatOutlet() {
             const select = document.getElementById('outlet_id');
             const option = select.options[select.selectedIndex];
             const kotak = document.getElementById('box-alamat');
             const teks = document.getElementById('teks_alamat');
 
-            if (select.value) {
+            if (select.value && option) {
                 teks.textContent = option.dataset.alamat || 'Alamat Tidak Tersedia!';
                 kotak.classList.remove('hidden');
             } else {
                 kotak.classList.add('hidden');
                 teks.textContent = '-';
             }
+
+            // Tampilkan harga produk secara dinamis di teks dropdown agar kasir/SPG langsung tahu harganya
+            const wilayahId = ambilWilayahOutlet();
+            document.querySelectorAll('.produk-select').forEach(sel => {
+                Array.from(sel.options).forEach(opt => {
+                    if (!opt.value) return;
+                    const pId = opt.value;
+                    const h = ambilHargaProduk(pId, opt);
+                    const rawNama = opt.dataset.nama || opt.text.split(' — ')[0];
+                    const kat = opt.dataset.kategori ? ` (${opt.dataset.kategori})` : '';
+                    if (h > 0 && wilayahId) {
+                        opt.text = `${rawNama}${kat} — ${RupiahFormat(h)}`;
+                    } else {
+                        opt.text = `${rawNama}${kat}`;
+                    }
+                });
+            });
 
             document.querySelectorAll('#container_produk .item-row')
                 .forEach(row => {
@@ -228,18 +266,19 @@
 
             const produkId = selectProduk.value;
             const wilayahId = ambilWilayahOutlet();
+            const selectedOpt = selectProduk.options[selectProduk.selectedIndex];
 
             // Jika produk dipilih tapi outlet belum dipilih
             if (produkId && !wilayahId) {
                 inputHarga.value = 0;
                 teksSubtotal.textContent = '⚠ Pilih outlet dulu';
                 teksSubtotal.classList.add('text-red-500');
-                teksSubtotal.classList.remove('text-emerald-600');
+                teksSubtotal.classList.remove('text-emerald-600', 'text-orange-500');
                 hitungHargaTotal();
                 return;
             }
 
-            const harga = ambilHargaProduk(produkId);
+            const harga = ambilHargaProduk(produkId, selectedOpt);
             const jumlah = Math.max(0, Number(inputJumlah.value || 0));
             const subtotal = harga * jumlah;
 
@@ -267,7 +306,7 @@
                 const inputJumlah = row.querySelector('.jumlah-input');
                 const option = selectProduk.options[selectProduk.selectedIndex];
 
-                const harga = ambilHargaProduk(selectProduk.value);
+                const harga = ambilHargaProduk(selectProduk.value, option);
                 const jumlah = Math.max(0, Number(inputJumlah.value || 0));
                 total += harga * jumlah;
             });
@@ -334,4 +373,3 @@
         });
     </script>
 @endsection
-

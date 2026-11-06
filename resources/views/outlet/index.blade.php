@@ -50,22 +50,6 @@
                 </p>
                 <p class="mt-1 text-xs text-gray-400">Seluruh data outlet</p>
             </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Halaman Saat Ini</p>
-                <p class="mt-2 text-3xl font-bold text-indigo-600">
-                    {{ $outlet->count() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">Data pada halaman ini</p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Jumlah Halaman</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ $outlet->lastPage() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">Berdasarkan pagination</p>
-            </div>
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">

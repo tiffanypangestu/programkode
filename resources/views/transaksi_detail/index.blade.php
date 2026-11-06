@@ -8,15 +8,14 @@
             <div>
                 <p class="text-sm font-medium text-indigo-600">Penjualan</p>
                 <h1 class="mt-1 text-2xl font-bold text-gray-900">Detail Transaksi</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Kelola rincian produk pada setiap transaksi penjualan.
-                </p>
             </div>
 
-            <a href="{{ route('transaksi-detail.create') }}"
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white hover:bg-indigo-700">
-                + Tambah Detail
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="{{ route('penjualan.create') }}"
+                    class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 shadow-sm transition">
+                    + Tambah Penjualan
+                </a>
+            </div>
         </div>
 
         @if (session('success'))
@@ -43,22 +42,14 @@
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Total Detail</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">{{ $transaksiDetail->total() }}</p>
-                <p class="mt-1 text-xs text-gray-400">Seluruh baris detail transaksi</p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Detail pada Halaman Ini</p>
-                <p class="mt-2 text-3xl font-bold text-indigo-600">{{ $transaksiDetail->count() }}</p>
-                <p class="mt-1 text-xs text-gray-400">Baris yang sedang ditampilkan</p>
+                <p class="text-md text-gray-700">Total Transaksi</p>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ $transaksi->total() }}</p>
             </div>
         </div>
 
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
             <div class="border-b border-gray-200 px-6 py-5">
-                <h2 class="font-semibold text-gray-900">Daftar Produk Transaksi</h2>
-                <p class="mt-1 text-sm text-gray-500">Rincian jumlah dan nilai setiap produk.</p>
+                <h2 class="font-semibold text-gray-900">Daftar Transaksi Penjualan</h2>
             </div>
 
             <div class="overflow-x-auto">
@@ -69,70 +60,155 @@
                             <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-gray-500">Transaksi</th>
                             <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-gray-500">Outlet</th>
                             <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-gray-500">Karyawan</th>
-                            <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-gray-500">Produk</th>
-                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Jumlah</th>
-                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Harga Satuan</th>
-                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Subtotal</th>
-                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Aksi</th>
+                            <th class="px-5 py-4 text-left text-xs font-semibold uppercase text-gray-500 min-w-[280px]">
+                                Rincian Produk</th>
+                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Total Item</th>
+                            <th class="px-5 py-4 text-right text-xs font-semibold uppercase text-gray-500">Total Transaksi
+                            </th>
+                            <th class="px-5 py-4 text-center text-xs font-semibold uppercase text-gray-500">Aksi</th>
                         </tr>
                     </thead>
 
                     <tbody class="divide-y divide-gray-100 bg-white">
-                        @forelse($transaksiDetail as $item)
-                            <tr class="transition hover:bg-gray-50">
+                        @forelse($transaksi as $item)
+                            <tr class="transition hover:bg-gray-50/80">
                                 <td class="whitespace-nowrap px-5 py-4 text-sm text-gray-500">
-                                    {{ $transaksiDetail->firstItem() + $loop->index }}
+                                    {{ $transaksi->firstItem() + $loop->index }}
                                 </td>
 
-                                <td class="px-5 py-4 text-sm font-semibold text-indigo-600">
-                                    {{ $item->nomor_transaksi ?? ($item->transaksi?->nomor_transaksi ?: 'TR-' . $item->transaksi_id) }}
+                                <td class="whitespace-nowrap px-5 py-4 text-sm">
+                                    <div class="font-bold text-indigo-600">
+                                        {{ $item->nomor_transaksi ?? 'TR-' . $item->transaksi_id }}
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        {{ $item->tanggal ? \Carbon\Carbon::parse($item->tanggal)->format('d/m/Y') : '-' }}
+                                    </div>
                                 </td>
 
-                                <td class="whitespace-nowrap px-5 py-4 text-sm font-semibold text-gray-700">
-                                    {{ $item->nama_outlet ?? '-' }}
+                                <td class="whitespace-nowrap px-5 py-4 text-sm">
+                                    <div class="font-semibold text-gray-800">
+                                        {{ $item->outlet->nama_outlet ?? '-' }}
+                                    </div>
+                                    <div class="text-xs text-gray-400 mt-0.5">
+                                        {{ $item->wilayah->nama_wilayah ?? ($item->outlet->wilayah->nama_wilayah ?? '') }}
+                                    </div>
                                 </td>
 
-                                <td class="px-5 py-4 text-sm font-medium text-gray-700">
-                                    <div class="font-medium text-gray-900">{{ $item->nama_petugas ?? '-' }}</div>
-                                    @if (isset($item->jabatan_petugas))
-                                        <div class="text-xs text-gray-500">{{ $item->jabatan_petugas }}</div>
+                                <td class="whitespace-nowrap px-5 py-4 text-sm">
+                                    <div class="font-medium text-gray-900">
+                                        {{ $item->karyawan->nama_karyawan ?? ($item->karyawan->user->name ?? '-') }}
+                                    </div>
+                                    <span
+                                        class="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 mt-0.5">
+                                        {{ $item->karyawan->role->nama_role ?? ($item->karyawan->jabatan ?? 'Karyawan') }}
+                                    </span>
+                                </td>
+
+                                <td class="px-5 py-4 text-sm">
+                                    @if ($firstDetail = $item->transaksiDetail->first())
+                                        <div class="space-y-1.5 max-w-sm">
+                                            {{-- Hanya tampilkan 1 produk utama --}}
+                                            <div
+                                                class="flex items-center justify-between gap-3 text-xs bg-gray-50 rounded-lg px-2.5 py-1.5 border border-gray-200">
+                                                <div class="font-medium text-gray-900 truncate"
+                                                    title="{{ $firstDetail->produk->nama_produk ?? 'ID: ' . $firstDetail->produk_id }}">
+                                                    {{ $firstDetail->produk->nama_produk ?? 'ID: ' . $firstDetail->produk_id }}
+                                                </div>
+                                                <div class="text-gray-500 shrink-0 font-medium text-right">
+                                                    <span
+                                                        class="font-bold text-gray-900">{{ $firstDetail->jumlah }}x</span>
+                                                    <span class="text-gray-400 text-[10px]">@</span>
+                                                    <span>Rp{{ number_format((float) $firstDetail->harga_satuan, 0, ',', '.') }}</span>
+                                                </div>
+                                            </div>
+
+                                            {{-- Keterangan produk lainnya jika lebih dari 1 produk --}}
+                                            @if ($item->transaksiDetail->count() > 1)
+                                                @php
+                                                    $sisaCount = $item->transaksiDetail->count() - 1;
+                                                    $sisaProduk = $item->transaksiDetail->slice(1);
+                                                @endphp
+                                                <details class="group">
+                                                    <summary
+                                                        class="list-none [&::-webkit-details-marker]:hidden cursor-pointer text-xs font-medium text-indigo-600 hover:text-indigo-800 select-none inline-flex items-center gap-1">
+                                                        <span>... {{ $sisaCount }} produk lainnya</span>
+                                                        <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-180 text-indigo-500"
+                                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                stroke-width="2" d="M19 9l-7 7-7-7" />
+                                                        </svg>
+                                                    </summary>
+                                                    <div class="mt-1.5 space-y-1 pt-1 border-t border-gray-100">
+                                                        @foreach ($sisaProduk as $detail)
+                                                            <div
+                                                                class="flex items-center justify-between gap-3 text-xs bg-gray-50/70 rounded-lg px-2.5 py-1 border border-gray-100">
+                                                                <div class="font-medium text-gray-700 truncate"
+                                                                    title="{{ $detail->produk->nama_produk ?? 'ID: ' . $detail->produk_id }}">
+                                                                    {{ $detail->produk->nama_produk ?? 'ID: ' . $detail->produk_id }}
+                                                                </div>
+                                                                <div class="text-gray-500 shrink-0 text-right">
+                                                                    <span
+                                                                        class="font-semibold text-gray-800">{{ $detail->jumlah }}x</span>
+                                                                    <span class="text-gray-400 text-[10px]">@</span>
+                                                                    <span>Rp{{ number_format((float) $detail->harga_satuan, 0, ',', '.') }}</span>
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </details>
+                                            @endif
+                                        </div>
+                                    @else
+                                        <span class="text-gray-400 text-xs italic">Tidak ada produk</span>
                                     @endif
                                 </td>
 
-                                <td class="px-5 py-4 text-sm font-medium text-gray-900">
-                                    {{ $item->nama_produk ?? ($item->produk?->nama_produk ?? '-') }}
-                                </td>
-
-                                <td class="whitespace-nowrap px-5 py-4 text-right text-sm text-gray-700">
-                                    {{ number_format($item->jumlah, 0, ',', '.') }}
-                                </td>
-
-                                <td class="whitespace-nowrap px-5 py-4 text-right text-sm text-gray-700">
-                                    Rp{{ number_format((float) $item->harga_satuan, 0, ',', '.') }}
-                                </td>
-
-                                <td class="whitespace-nowrap px-5 py-4 text-right text-sm font-semibold text-gray-900">
-                                    Rp{{ number_format((float) $item->subtotal, 0, ',', '.') }}
+                                <td class="whitespace-nowrap px-5 py-4 text-right text-sm">
+                                    <span class="text-sm font-bold text-gray-900">
+                                        {{ number_format($item->transaksiDetail->sum('jumlah'), 0, ',', '.') }}
+                                    </span>
+                                    <span class="text-xs text-gray-400 block">unit</span>
                                 </td>
 
                                 <td class="whitespace-nowrap px-5 py-4 text-right text-sm">
-                                    <div class="flex items-center justify-end gap-3">
-                                        <a href="{{ route('transaksi-detail.show', $item->transaksi_detail_id) }}"
-                                            class="font-medium text-indigo-600 hover:text-indigo-800">
+                                    <span class="text-sm font-bold text-emerald-600">
+                                        Rp{{ number_format((float) ($item->total_transaksi ?: $item->transaksiDetail->sum('subtotal')), 0, ',', '.') }}
+                                    </span>
+                                </td>
+
+                                <td class="whitespace-nowrap px-5 py-4 text-center text-sm">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('transaksi-detail.show', $item->transaksi_id) }}"
+                                            class="inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 hover:bg-indigo-100 transition">
                                             Lihat
                                         </a>
 
-                                        <a href="{{ route('transaksi-detail.edit', $item->transaksi_detail_id) }}"
-                                            class="font-medium text-amber-600 hover:text-amber-800">
-                                            Edit
-                                        </a>
+                                        @php
+                                            $penjualanId = str_replace('TR-', '', $item->nomor_transaksi);
+                                            $isPenjualan =
+                                                str_starts_with($item->nomor_transaksi, 'TR-') &&
+                                                is_numeric($penjualanId);
+                                        @endphp
 
-                                        <form action="{{ route('transaksi-detail.destroy', $item->transaksi_detail_id) }}"
+                                        @if ($isPenjualan)
+                                            <a href="{{ route('penjualan.edit', $penjualanId) }}"
+                                                class="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition">
+                                                Edit
+                                            </a>
+                                        @else
+                                            <a href="{{ route('transaksi.edit', $item->transaksi_id) }}"
+                                                class="inline-flex items-center rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-100 transition">
+                                                Edit
+                                            </a>
+                                        @endif
+
+                                        <form action="{{ route('transaksi-detail.destroy', $item->transaksi_id) }}"
                                             method="POST"
-                                            onsubmit="return confirm('Yakin ingin menghapus detail transaksi ini?')">
+                                            onsubmit="return confirm('Yakin ingin menghapus seluruh transaksi {{ $item->nomor_transaksi }} ini?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="font-medium text-red-600 hover:text-red-800">
+                                            <button type="submit"
+                                                class="inline-flex items-center rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 transition">
                                                 Hapus
                                             </button>
                                         </form>
@@ -141,14 +217,18 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="px-6 py-14 text-center">
-                                    <h3 class="font-semibold text-gray-900">Belum ada detail transaksi</h3>
-                                    <p class="mt-2 text-sm text-gray-500">
-                                        Tambahkan produk pada transaksi yang sudah tersedia.
+                                <td colspan="8" class="px-6 py-14 text-center">
+                                    <div
+                                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-2xl mb-3">
+                                        📦
+                                    </div>
+                                    <h3 class="font-semibold text-gray-900">Belum ada transaksi penjualan</h3>
+                                    <p class="mt-1 text-sm text-gray-500">
+                                        Silakan input transaksi baru untuk melihat daftar di sini.
                                     </p>
-                                    <a href="{{ route('transaksi-detail.create') }}"
-                                        class="mt-4 inline-block font-semibold text-indigo-600 hover:text-indigo-800">
-                                        + Tambah Detail Transaksi
+                                    <a href="{{ route('penjualan.create') }}"
+                                        class="mt-4 inline-block rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+                                        + Input Penjualan Baru
                                     </a>
                                 </td>
                             </tr>
@@ -157,9 +237,9 @@
                 </table>
             </div>
 
-            @if ($transaksiDetail->hasPages())
+            @if ($transaksi->hasPages())
                 <div class="border-t border-gray-200 px-5 py-4">
-                    {{ $transaksiDetail->links() }}
+                    {{ $transaksi->links() }}
                 </div>
             @endif
         </div>

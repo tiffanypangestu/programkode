@@ -35,4 +35,13 @@ class Karyawan extends Model
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
+
+    /**
+     * Outlet-outlet tempat karyawan ini bertugas.
+     */
+    public function outlets()
+    {
+        return $this->belongsToMany(Outlet::class, 'karyawan_outlet', 'karyawan_id', 'outlet_id')
+                    ->withTimestamps();
+    }
 }

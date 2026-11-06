@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Karyawan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -72,6 +73,16 @@ class RegisterController extends Controller
                     'nama_bc' => $validated['nama_lengkap'],
                 ]);
             }
+
+            // Otomatis buat data karyawan agar akun terhubung langsung
+            Karyawan::create([
+                'user_id'       => $user_new->user_id,
+                'role_id'       => $role->role_id,
+                'nama_karyawan' => $validated['nama_lengkap'],
+                'jabatan'       => $nama_role,
+                'nomor_telepon' => $user_new->nomor_telepon ?? null,
+                'tahun_masuk'   => (int) date('Y'),
+            ]);
         });
 
         Auth::login($user_new);

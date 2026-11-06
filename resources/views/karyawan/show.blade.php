@@ -62,6 +62,23 @@
                     <dt class="text-sm text-gray-500">Tahun Masuk</dt>
                     <dd class="text-sm font-medium text-gray-900 sm:col-span-2">{{ $karyawan->tahun_masuk ?: '-' }}</dd>
                 </div>
+                <div class="grid grid-cols-1 gap-1 px-6 py-5 sm:grid-cols-3">
+                    <dt class="text-sm text-gray-500">Outlet Penugasan</dt>
+                    <dd class="text-sm font-medium text-gray-900 sm:col-span-2">
+                        @if ($karyawan->outlets->isEmpty())
+                            <span class="text-gray-400 italic">Belum ada outlet yang ditugaskan</span>
+                        @else
+                            <div class="flex flex-wrap gap-2">
+                                @foreach ($karyawan->outlets as $o)
+                                    <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200">
+                                        {{ $o->nama_outlet }}
+                                        <span class="ml-1 text-indigo-400">({{ $o->wilayah->nama_wilayah ?? '' }})</span>
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
+                    </dd>
+                </div>
             </dl>
 
             <div class="border-t border-gray-100 bg-gray-50 px-6 py-5">

@@ -20,6 +20,13 @@ class PenjualanImportController extends Controller
 
     public function store(Request $request)
     {
+        if (! $request->filled('karyawan_id')) {
+            $karyawanId = auth()->user()?->karyawan?->karyawan_id ?? Karyawan::first()?->karyawan_id;
+            if ($karyawanId) {
+                $request->merge(['karyawan_id' => $karyawanId]);
+            }
+        }
+
         $validated = $request->validate([
             'file' => ['required', 'file', 'mimes:xlsx,csv', 'max:10240'],
             'karyawan_id' => ['required', 'integer', 'exists:karyawan,karyawan_id'],

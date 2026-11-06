@@ -136,6 +136,28 @@
                          <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                      @enderror
                  </div>
+                 {{-- Outlet Penugasan --}}
+                 <div class="sm:col-span-2">
+                     <label class="mb-2 block text-sm font-medium text-gray-700">
+                         Outlet Penugasan
+                     </label>
+                     <p class="mb-3 text-xs text-gray-500">
+                         Pilih outlet tempat karyawan ini bertugas. Karyawan hanya dapat mencatat penjualan di outlet yang dipilih.
+                     </p>
+                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 max-h-56 overflow-y-auto rounded-xl border border-gray-200 p-3">
+                         @foreach ($outlet as $o)
+                             <label class="flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 cursor-pointer hover:bg-indigo-50 transition">
+                                 <input type="checkbox" name="outlet_ids[]" value="{{ $o->outlet_id }}"
+                                     {{ in_array($o->outlet_id, old('outlet_ids', [])) ? 'checked' : '' }}
+                                     class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                 <span class="text-sm text-gray-700">{{ $o->nama_outlet }}</span>
+                             </label>
+                         @endforeach
+                     </div>
+                     @error('outlet_ids')
+                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                     @enderror
+                 </div>
 
              </div>
 

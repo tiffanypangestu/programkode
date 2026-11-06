@@ -30,8 +30,6 @@
         <tr>
             <td style="font-weight: bold; color: #374151; padding: 4px 0;">Alamat</td>
             <td style="padding: 4px 0;">: {{ $penjualan->outlet->alamat_outlet ?? '-' }}</td>
-            <td style="font-weight: bold; color: #374151; padding: 4px 0;">Petugas</td>
-            <td style="padding: 4px 0;">: {{ $penjualan->karyawan->nama_karyawan ?? '-' }}</td>
         </tr>
 
         <tr>
@@ -84,11 +82,6 @@
             </tr>
         </tfoot>
     </table>
-
-    {{-- Footer --}}
-    <div style="text-align: right; font-size: 10px; color: #9ca3af; margin-top: 30px;">
-        <p style="margin: 0;">Dicetak otomatis oleh sistem pada {{ date('d/m/Y H:i') }}</p>
-    </div>
 
 </body>
 

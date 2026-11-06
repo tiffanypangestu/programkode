@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bc;
+use App\Models\Karyawan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -64,6 +65,15 @@ class BcController extends Controller
                 'user_id' => $user->user_id,
                 'nama_bc' => $validated['nama_bc'],
                 'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+            ]);
+
+            Karyawan::create([
+                'user_id'       => $user->user_id,
+                'role_id'       => $roleBc ? $roleBc->role_id : 3,
+                'nama_karyawan' => $validated['nama_bc'],
+                'jabatan'       => 'Beauty Consultant',
+                'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+                'tahun_masuk'   => (int) date('Y'),
             ]);
         });
 

@@ -44,25 +44,6 @@
                 <p class="mt-2 text-3xl font-bold text-gray-900">
                     {{ $karyawan->total() }}
                 </p>
-                <p class="mt-1 text-xs text-gray-400">Seluruh data karyawan</p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Halaman Saat Ini</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ $karyawan->currentPage() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">
-                    Dari {{ $karyawan->lastPage() }} halaman
-                </p>
-            </div>
-
-            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <p class="text-sm text-gray-500">Data Ditampilkan</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">
-                    {{ $karyawan->count() }}
-                </p>
-                <p class="mt-1 text-xs text-gray-400">Pada halaman ini</p>
             </div>
         </div>
 
@@ -114,6 +95,10 @@
                                     Akun Pengguna
                                 </th>
                                 <th
+                                    class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                    Outlet Tugas
+                                </th>
+                                <th
                                     class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                                     Aksi
                                 </th>
@@ -145,6 +130,22 @@
 
                                     <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
                                         {{ $item->user->name ?? 'Tidak terhubung' }}
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-gray-600">
+                                        @if ($item->outlets->isNotEmpty())
+                                            <div class="flex flex-wrap gap-1">
+                                                @foreach ($item->outlets->take(2) as $o)
+                                                    <span
+                                                        class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">{{ $o->nama_outlet }}</span>
+                                                @endforeach
+                                                @if ($item->outlets->count() > 2)
+                                                    <span class="text-xs text-gray-400">+{{ $item->outlets->count() - 2 }}
+                                                        lainnya</span>
+                                                @endif
+                                            </div>
+                                        @else
+                                            <span class="text-xs text-gray-400 italic">Belum ditugaskan</span>
+                                        @endif
                                     </td>
 
                                     <td class="whitespace-nowrap px-6 py-4">

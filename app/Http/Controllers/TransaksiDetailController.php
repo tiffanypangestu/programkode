@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\HargaProduk;
+use App\Models\Penjualan;
 use App\Models\Produk;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
@@ -17,36 +18,21 @@ class TransaksiDetailController extends Controller
      */
     public function index()
     {
-        // Ambil seluruh detail transaksi dari penjualan BC, SPG, Supervisor, Admin, maupun Import
-        $transaksiDetail = DB::table('transaksi_detail')
-            ->join('transaksi', 'transaksi_detail.transaksi_id', '=', 'transaksi.transaksi_id')
-            ->join('outlet', 'transaksi.outlet_id', '=', 'outlet.outlet_id')
-            ->join('produk', 'transaksi_detail.produk_id', '=', 'produk.produk_id')
-            ->leftJoin('karyawan', 'transaksi.karyawan_id', '=', 'karyawan.karyawan_id')
-            ->leftJoin('users', 'karyawan.user_id', '=', 'users.user_id')
-            ->leftJoin('role', function ($join) {
-                $join->on('karyawan.role_id', '=', 'role.role_id')
-                    ->orOn('users.role_id', '=', 'role.role_id');
-            })
-            ->leftJoin('spg', 'users.user_id', '=', 'spg.user_id')
-            ->leftJoin('bc', 'users.user_id', '=', 'bc.user_id')
-            ->select(
-                'transaksi_detail.transaksi_detail_id',
-                'transaksi_detail.transaksi_id',
-                'transaksi.nomor_transaksi',
-                'transaksi.tanggal as tanggal_transaksi',
-                'outlet.nama_outlet',
-                'produk.nama_produk',
-                'transaksi_detail.jumlah',
-                'transaksi_detail.harga_satuan',
-                'transaksi_detail.subtotal',
-                DB::raw('COALESCE(karyawan.nama_karyawan, spg.nama_spg, bc.nama_bc, users.name, "-") as nama_petugas'),
-                DB::raw('COALESCE(role.nama_role, karyawan.jabatan, "Karyawan") as jabatan_petugas')
-            )
-            ->orderBy('transaksi_detail.transaksi_detail_id', 'DESC')
-            ->paginate(10);
+        // Tampilkan transaksi di mana seluruh produk digabung per transaksi (1 baris per transaksi)
+        $transaksi = Transaksi::with([
+            'outlet.wilayah',
+            'wilayah',
+            'karyawan.role',
+            'karyawan.user.role',
+            'transaksiDetail.produk',
+            'transaksiDetail.hargaProduk',
+        ])
+        ->withCount('transaksiDetail')
+        ->withSum('transaksiDetail', 'jumlah')
+        ->orderByDesc('transaksi_id')
+        ->paginate(10);
 
-        return view('transaksi_detail.index', compact('transaksiDetail'));
+        return view('transaksi_detail.index', compact('transaksi'));
     }
 
     /**
@@ -130,11 +116,35 @@ class TransaksiDetailController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(TransaksiDetail $transaksiDetail)
+    public function show($id)
     {
-        $transaksiDetail->load(['transaksi.outlet', 'transaksi.karyawan.role', 'produk', 'hargaProduk']);
+        $transaksi = Transaksi::with([
+            'outlet.wilayah',
+            'wilayah',
+            'karyawan.role',
+            'transaksiDetail.produk',
+            'transaksiDetail.hargaProduk.wilayah',
+        ])->find($id);
 
-        return view('transaksi_detail.show', compact('transaksiDetail'));
+        if ($transaksi) {
+            return view('transaksi_detail.show', compact('transaksi'));
+        }
+
+        // Fallback jika id adalah transaksi_detail_id
+        $detail = TransaksiDetail::find($id);
+        if ($detail) {
+            $transaksi = Transaksi::with([
+                'outlet.wilayah',
+                'wilayah',
+                'karyawan.role',
+                'transaksiDetail.produk',
+                'transaksiDetail.hargaProduk.wilayah',
+            ])->findOrFail($detail->transaksi_id);
+
+            return view('transaksi_detail.show', compact('transaksi'));
+        }
+
+        abort(404, 'Transaksi tidak ditemukan');
     }
 
     /**
@@ -222,15 +232,36 @@ class TransaksiDetailController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(TransaksiDetail $transaksiDetail)
+    public function destroy($id)
     {
-        DB::transaction(function () use ($transaksiDetail) {
-            $transaksi = Transaksi::where('transaksi_id', $transaksiDetail->transaksi_id)->lockForUpdate()->firstOrFail();
-            $transaksiDetail->delete();
-            $transaksi->total_transaksi = TransaksiDetail::where('transaksi_id', $transaksi->transaksi_id)->sum('subtotal');
-            $transaksi->save();
+        DB::transaction(function () use ($id) {
+            $transaksi = Transaksi::find($id);
+            if ($transaksi) {
+                // Hapus detail transaksi terkait
+                TransaksiDetail::where('transaksi_id', $transaksi->transaksi_id)->delete();
+
+                // Hapus penjualan terkait jika ada
+                if ($transaksi->nomor_transaksi && str_starts_with($transaksi->nomor_transaksi, 'TR-')) {
+                    $penjualanId = str_replace('TR-', '', $transaksi->nomor_transaksi);
+                    if (is_numeric($penjualanId)) {
+                        Penjualan::where('penjualan_id', $penjualanId)->delete();
+                    }
+                }
+
+                $transaksi->delete();
+            } else {
+                $transaksiDetail = TransaksiDetail::find($id);
+                if ($transaksiDetail) {
+                    $trx = Transaksi::where('transaksi_id', $transaksiDetail->transaksi_id)->lockForUpdate()->first();
+                    $transaksiDetail->delete();
+                    if ($trx) {
+                        $trx->total_transaksi = TransaksiDetail::where('transaksi_id', $trx->transaksi_id)->sum('subtotal');
+                        $trx->save();
+                    }
+                }
+            }
         });
 
-        return redirect()->route('transaksi-detail.index')->with('success', 'Detail transaksi berhasil dihapus');
+        return redirect()->route('transaksi-detail.index')->with('success', 'Transaksi berhasil dihapus');
     }
 }

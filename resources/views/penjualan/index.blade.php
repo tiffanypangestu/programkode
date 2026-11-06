@@ -1,4 +1,4 @@
-﻿@extends('layouts.app')
+@extends('layouts.app')
 
 @section('title', 'Tambah Data Penjualan')
 @section('content')
@@ -15,7 +15,7 @@
                     </p>
                 </div>
 
-                <div class="flex-wrap gap-2">
+                <div class="flex flex-wrap gap-2">
                     <a href="{{ route('penjualan.import.form') }}"
                         class="inline-flex items-center justify-between gap-2.5 rounded-xl bg-red-200 px-6 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white shadow-md transition-all duration-150 active:scale-95">
                         <span>
@@ -125,7 +125,7 @@
                                             class="whitespace-nowrap px-6 py-4 text-right text-sm font-bold text-emerald-600">
                                             Rp {{ number_format($item->total_harga, 0, ',', '.') }}</td>
 
-                                        <td class="whitespace-nowrap-px-6 py-4 text-center">
+                                        <td class="whitespace-nowrap px-6 py-4 text-center">
                                             <div class="flex items-center justify-center gap-1">
                                                 @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
                                                     <a href="{{ route('penjualan.pdf', $item->penjualan_id) }}"

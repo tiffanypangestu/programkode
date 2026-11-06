@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Karyawan;
 use App\Models\Role;
 use App\Models\Spg;
 use App\Models\User;
@@ -59,6 +60,15 @@ class SpgController extends Controller
                 'user_id' => $user->user_id,
                 'nama_spg' => $validated['nama_spg'],
                 'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+            ]);
+
+            Karyawan::create([
+                'user_id'       => $user->user_id,
+                'role_id'       => $roleSpg ? $roleSpg->role_id : 4,
+                'nama_karyawan' => $validated['nama_spg'],
+                'jabatan'       => 'Sales Promotion Girl',
+                'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+                'tahun_masuk'   => (int) date('Y'),
             ]);
         });
 
