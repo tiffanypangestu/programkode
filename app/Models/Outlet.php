@@ -40,4 +40,12 @@ class Outlet extends Model
         return $this->belongsToMany(Karyawan::class, 'karyawan_outlet', 'outlet_id', 'karyawan_id')
                     ->withTimestamps();
     }
+
+    /**
+     * Stok produk di outlet ini.
+     */
+    public function stokOutlet()
+    {
+        return $this->hasMany(StokOutlet::class, 'outlet_id', 'outlet_id');
+    }
 }

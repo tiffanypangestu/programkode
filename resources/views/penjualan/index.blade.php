@@ -1,113 +1,188 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Data Penjualan')
+@section('title', 'Data Penjualan')
+
+@push('styles')
+    {{-- Flatpickr CSS & MonthSelect Plugin CSS --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/style.css">
+    <style>
+        .flatpickr-calendar.hasMonthSelect {
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+            font-family: inherit;
+        }
+        .flatpickr-calendar .flatpickr-current-month {
+            font-size: 110%;
+            padding: 8px 0;
+        }
+        .flatpickr-monthSelect-month.selected {
+            background-color: #059669 !important;
+            border-color: #059669 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            border-radius: 0.5rem;
+        }
+        .flatpickr-monthSelect-month:hover {
+            background-color: #d1fae5;
+            border-radius: 0.5rem;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="min-h-screen bg-gray-100 px-4 py-8 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-7xl">
-            <div class="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="mx-auto max-w-7xl space-y-6">
+
+            {{-- Header Menu & Tombol Aksi --}}
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h1 class="mt-1 text-2xl font-bold tracking-light text-gray-900">
+                    <h1 class="text-2xl font-bold tracking-tight text-gray-900">
                         Data Penjualan
                     </h1>
-
-                    <p class="mt-2 text-sm text-gray-500">
-                        Tempat Mengelola Data penjualan UD Medan
+                    <p class="mt-1 text-sm text-gray-500">
+                        Tempat mengelola dan memantau riwayat faktur penjualan UD Medan
                     </p>
                 </div>
 
-                <div class="flex flex-wrap gap-2">
-                    <a href="{{ route('penjualan.import.form') }}"
-                        class="inline-flex items-center justify-between gap-2.5 rounded-xl bg-red-200 px-6 py-3 text-sm font-semibold text-black hover:bg-red-600 hover:text-white shadow-md transition-all duration-150 active:scale-95">
-                        <span>
-                            <svg class="h-5 w-5 fill-current transition-colors duration-150 hover:text-white"
-                                viewBox="0 0 1920 1920" xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="m807.186 686.592 272.864 272.864H0v112.94h1080.05l-272.864 272.978 79.736 79.849 409.296-409.183-409.296-409.184-79.736 79.736ZM1870.419 434.69l-329.221-329.11C1509.688 74.07 1465.979 56 1421.48 56H451.773v730.612h112.94V168.941h790.584v451.762h451.762v1129.405H564.714v-508.233h-112.94v621.173H1920V554.52c0-45.176-17.619-87.754-49.58-119.83Zm-402.181-242.37 315.443 315.442h-315.443V192.319Z"
-                                    fill-rule="evenodd" />
+                <div class="flex flex-wrap gap-2.5">
+                    @if (in_array(auth()->user()->role->nama_role ?? '', ['Admin', 'Supervisor']))
+                        <a href="{{ route('penjualan.import.form') }}"
+                            class="inline-flex items-center gap-2 rounded-xl bg-red-100 px-4 py-2.5 text-sm font-semibold text-red-800 hover:bg-red-200 shadow-sm transition active:scale-95">
+                            <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
                             </svg>
-                        </span>
-                        <span>Import Excel</span>
-                    </a>
+                            <span>Import Excel</span>
+                        </a>
+                    @endif
 
                     <a href="{{ route('penjualan.create') }}"
-                        class="inline-flex items-center justify-between gap-2.5 rounded-xl bg-blue-200 px-6 py-3 text-sm font-semibold text-black shadow:md hover:bg-blue-600 hover:text-white">
-                        <span class="text-lg">
-                            <svg class="h-5 w-5 fill-current transition-colors hover:text-white" viewBox="0 0 1920 1920"
-                                xmlns="http://www.w3.org/2000/svg">
-                                <path
-                                    d="m807.186 686.592 272.864 272.864H0v112.94h1080.05l-272.864 272.978 79.736 79.849 409.296-409.183-409.296-409.184-79.736 79.736ZM1870.419 434.69l-329.221-329.11C1509.688 74.07 1465.979 56 1421.48 56H451.773v730.612h112.94V168.941h790.584v451.762h451.762v1129.405H564.714v-508.233h-112.94v621.173H1920V554.52c0-45.176-17.619-87.754-49.58-119.83Zm-402.181-242.37 315.443 315.442h-315.443V192.319Z"
-                                    fill-rule="evenodd" />
-                            </svg>
-                        </span>
+                        class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 shadow-md transition active:scale-95">
+                        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
                         <span>Tambah Penjualan</span>
                     </a>
                 </div>
             </div>
 
+            {{-- Pesan Notifikasi Sukses --}}
             @if (session('success'))
-                <div class="mb-5 rounded-xl border border-green-50 bg-green-100 px-5 py-4 text-sm text-green-800">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-800 shadow-sm">
                     {{ session('success') }}
                 </div>
             @endif
 
+            {{-- Card Filter Periode (Bulan dan Tahun - Flatpickr) --}}
+            <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm space-y-4">
+                <form action="{{ route('penjualan.index') }}" method="GET" id="form-filter-penjualan" class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                        <label for="periode_picker" class="text-sm font-semibold text-gray-700 whitespace-nowrap flex items-center gap-1.5">
+                            <span class="text-base">📅</span>
+                            <span>Filter Bulan & Tahun:</span>
+                        </label>
+
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="periode_picker" name="periode"
+                                value="{{ $periode }}"
+                                placeholder="Pilih Bulan & Tahun..."
+                                class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer">
+                        </div>
+
+                        <button type="submit"
+                            class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition">
+                            Terapkan
+                        </button>
+                    </div>
+
+                    {{-- Tombol Pintas Filter --}}
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="text-xs text-gray-400">Pintas:</span>
+                        <a href="{{ route('penjualan.index') }}"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition border {{ empty($tampilkanSemua) && $periode === date('Y-m') ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' }}">
+                            Bulan Ini
+                        </a>
+                        <a href="{{ route('penjualan.index', ['semua' => 1]) }}"
+                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition border {{ !empty($tampilkanSemua) ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' }}">
+                            Semua Riwayat
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            {{-- Tabel Data Penjualan --}}
             <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-md">
                 @if ($penjualan->isEmpty())
                     <div class="px-6 py-16 text-center">
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gray-100 text-2xl">
+                            🧾
+                        </div>
                         <h3 class="mt-4 font-semibold text-gray-900">
-                            Belum ada Data Penjualan
+                            Tidak Ada Data Penjualan
                         </h3>
-                        <p class="mt-2 text-sm text-gray-500">
-                            Klik tombol Tambah Penjualan
+                        <p class="mt-1 text-sm text-gray-500">
+                            @if (!empty($periode))
+                                Belum ada faktur penjualan tercatat pada periode <span class="font-semibold text-gray-700">{{ \Carbon\Carbon::parse($periode . '-01')->translatedFormat('F Y') }}</span>.
+                            @else
+                                Belum ada faktur penjualan yang tersimpan di sistem.
+                            @endif
                         </p>
+                        <div class="mt-4 flex justify-center gap-3">
+                            <a href="{{ route('penjualan.index', ['semua' => 1]) }}"
+                                class="rounded-xl border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                                Lihat Semua Riwayat
+                            </a>
+                            <a href="{{ route('penjualan.create') }}"
+                                class="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
+                                Tambah Penjualan Baru
+                            </a>
+                        </div>
                     </div>
                 @else
                     <div class="overflow-x-auto">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-100">
                                 <tr>
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600 w-16">
                                         Nomor
                                     </th>
-
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Tanggal
                                     </th>
-
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Outlet
                                     </th>
-
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Produk
                                     </th>
-
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Total Harga
                                     </th>
-
-                                    <th
-                                        class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                    <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Aksi
                                     </th>
                                 </tr>
                             </thead>
 
-                            <tbody class="divide divide-gray-200">
+                            <tbody class="divide-y divide-gray-200 bg-white">
                                 @foreach ($penjualan as $item)
                                     <tr class="transition hover:bg-gray-50">
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                            {{ $penjualan->firstItem() + $loop->index }}</td>
-                                        <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                            {{ \Carbon\Carbon::parse($item->tanggal_penjualan)->format('d-m-Y') }}</td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-center text-sm text-gray-500">
+                                            {{ $penjualan->firstItem() + $loop->index }}
+                                        </td>
+                                        <td class="whitespace-nowrap px-6 py-4 text-center text-sm font-medium text-gray-900">
+                                            {{ \Carbon\Carbon::parse($item->tanggal_penjualan)->format('d-m-Y') }}
+                                        </td>
                                         <td class="px-6 py-4 text-sm text-gray-900 font-semibold">
-                                            {{ $item->outlet->nama_outlet ?? '-' }}</td>
-
-                                        <td class="px-6 py-4 text-sm text-gray-900 font-semibold">
+                                            {{ $item->outlet->nama_outlet ?? '-' }}
+                                            @if ($item->karyawan)
+                                                <span class="block text-xs font-normal text-gray-400">
+                                                    PIC: {{ $item->karyawan->nama_karyawan }}
+                                                </span>
+                                            @endif
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">
                                             @if ($item->transaksiDetail && $item->transaksiDetail->isNotEmpty())
                                                 <span class="font-semibold text-gray-900">
                                                     {{ $item->transaksiDetail->first()->produk->nama_produk ?? 'Produk' }}
@@ -121,29 +196,34 @@
                                                 <span class="text-gray-400">-</span>
                                             @endif
                                         </td>
-                                        <td
-                                            class="whitespace-nowrap px-6 py-4 text-right text-sm font-bold text-emerald-600">
-                                            Rp {{ number_format($item->total_harga, 0, ',', '.') }}</td>
-
+                                        <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-bold text-emerald-600">
+                                            Rp {{ number_format($item->total_harga, 0, ',', '.') }}
+                                        </td>
                                         <td class="whitespace-nowrap px-6 py-4 text-center">
-                                            <div class="flex items-center justify-center gap-1">
+                                            <div class="flex items-center justify-center gap-1.5">
                                                 @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
                                                     <a href="{{ route('penjualan.pdf', $item->penjualan_id) }}"
                                                         target="_blank" title="Cetak Faktur PDF"
-                                                        class="rounded-lg border border-green-200 px-3 ml-2 py-1.5 text-xs font-semibold text-green-600 hover:bg-green-50">
-                                                        Cetak PDF
+                                                        class="rounded-lg border border-emerald-200 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50">
+                                                        PDF
                                                     </a>
                                                 @endif
                                                 <a href="{{ route('penjualan.show', $item) }}"
-                                                    class="rounded-lg border border-gray-200 px-3 py-1.5 ml-2 text-xs font-semibold text-gray-600 hover:bg-gray-50">Detail</a>
+                                                    class="rounded-lg border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                                                    Detail
+                                                </a>
                                                 <a href="{{ route('penjualan.edit', $item) }}"
-                                                    class="rounded-lg border border-indigo-200 px-3 py-1.5 ml-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">Edit</a>
+                                                    class="rounded-lg border border-indigo-200 px-2.5 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50">
+                                                    Edit
+                                                </a>
                                                 <form action="{{ route('penjualan.destroy', $item) }}" method="POST"
                                                     onsubmit="return confirm('Hapus faktur penjualan ini?')">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit"
-                                                        class="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 ml-2 hover:bg-red-50">Hapus</button>
+                                                        class="rounded-lg border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50">
+                                                        Hapus
+                                                    </button>
                                                 </form>
                                             </div>
                                         </td>
@@ -161,3 +241,50 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    {{-- Flatpickr JS & MonthSelect Plugin JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pickerInput = document.getElementById('periode_picker');
+            if (!pickerInput) return;
+
+            if (typeof flatpickr !== 'undefined') {
+                const plugins = [];
+                if (typeof monthSelectPlugin !== 'undefined') {
+                    plugins.push(new monthSelectPlugin({
+                        shorthand: false,
+                        dateFormat: "Y-m",
+                        altFormat: "F Y",
+                        theme: "light"
+                    }));
+                }
+
+                const fp = flatpickr(pickerInput, {
+                    locale: (typeof flatpickr.l10ns !== 'undefined' && flatpickr.l10ns.id) ? flatpickr.l10ns.id : 'default',
+                    plugins: plugins,
+                    altInput: true,
+                    altFormat: "F Y",
+                    dateFormat: "Y-m",
+                    defaultDate: "{{ $periode ?: date('Y-m') }}",
+                    disableMobile: true,
+                    onChange: function (selectedDates, dateStr, instance) {
+                        if (dateStr) {
+                            document.getElementById('form-filter-penjualan').submit();
+                        }
+                    }
+                });
+            } else {
+                // Fallback jika CDN tidak aktif: ubah jadi native HTML5 month picker
+                pickerInput.type = 'month';
+                pickerInput.addEventListener('change', function () {
+                    document.getElementById('form-filter-penjualan').submit();
+                });
+            }
+        });
+    </script>
+@endpush

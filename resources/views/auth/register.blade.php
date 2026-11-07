@@ -74,6 +74,50 @@
             @enderror
         </div>
 
+        {{-- Input Khusus SPG: Pilih Outlet Tempat Bertugas --}}
+        <div id="container-outlet-spg" class="hidden">
+            <label for="outlet_id" class="mb-2 block text-sm font-semibold text-gray-700">
+                Pilih Outlet Tempat Bertugas <span class="text-red-600">*</span>
+            </label>
+
+            <select name="outlet_id" id="outlet_id"
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#b18a32] focus:ring-2 focus:ring-[#b18a32]/20">
+                <option value="">-- Pilih Outlet Tempat Bertugas --</option>
+                @foreach ($outlets ?? [] as $out)
+                    <option value="{{ $out->outlet_id }}" {{ old('outlet_id') == $out->outlet_id ? 'selected' : '' }}>
+                        {{ $out->nama_outlet }} ({{ $out->wilayah->nama_wilayah ?? 'Wilayah ' . $out->wilayah_id }})
+                    </option>
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Khusus SPG: Tentukan outlet tempat Anda bertugas setiap hari.</p>
+
+            @error('outlet_id')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        {{-- Input Khusus BC: Pilih Wilayah (Dalam Kota / Luar Kota / Luar Pulau) --}}
+        <div id="container-wilayah-bc" class="hidden">
+            <label for="wilayah_id" class="mb-2 block text-sm font-semibold text-gray-700">
+                Pilih Wilayah Penugasan <span class="text-red-600">*</span>
+            </label>
+
+            <select name="wilayah_id" id="wilayah_id"
+                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#b18a32] focus:ring-2 focus:ring-[#b18a32]/20">
+                <option value="">-- Pilih Wilayah (Dalam Kota / Luar Kota / Luar Pulau) --</option>
+                @foreach ($wilayahs ?? [] as $w)
+                    <option value="{{ $w->wilayah_id }}" {{ old('wilayah_id') == $w->wilayah_id ? 'selected' : '' }}>
+                        {{ $w->nama_wilayah }}
+                    </option>
+                @endforeach
+            </select>
+            <p class="mt-1 text-xs text-gray-500">Khusus Beauty Consultant: Pilih wilayah penugasan counter Anda.</p>
+
+            @error('wilayah_id')
+                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
 
         <div>
             <label for="email" class="mb-2 block text-sm font-semibold text-gray-700">
@@ -110,6 +154,42 @@
             Daftar Akun
         </button>
     </form>
+
+    <script>
+        function sesuaikanFormJabatan() {
+            const selectJabatan = document.getElementById('jabatan');
+            const containerSpg = document.getElementById('container-outlet-spg');
+            const containerBc = document.getElementById('container-wilayah-bc');
+            const selectOutlet = document.getElementById('outlet_id');
+            const selectWilayah = document.getElementById('wilayah_id');
+
+            if (!selectJabatan || !containerSpg || !containerBc) return;
+
+            const val = selectJabatan.value;
+
+            if (val === 'Sales Promotion Girl' || val === 'SPG') {
+                containerSpg.classList.remove('hidden');
+                selectOutlet.required = true;
+
+                containerBc.classList.add('hidden');
+                selectWilayah.required = false;
+            } else if (val === 'Beauty Consultant' || val === 'BC') {
+                containerBc.classList.remove('hidden');
+                selectWilayah.required = true;
+
+                containerSpg.classList.add('hidden');
+                selectOutlet.required = false;
+            } else {
+                containerSpg.classList.add('hidden');
+                containerBc.classList.add('hidden');
+                selectOutlet.required = false;
+                selectWilayah.required = false;
+            }
+        }
+
+        document.getElementById('jabatan').addEventListener('change', sesuaikanFormJabatan);
+        document.addEventListener('DOMContentLoaded', sesuaikanFormJabatan);
+    </script>
 
     <p class="mt-6 text-center text-sm text-gray-600">
         Sudah memiliki akun?

@@ -128,6 +128,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/penjualan/{penjualan}/pdf', [PenjualanController::class, 'downloadPdf'])->name('penjualan.pdf');
 
     Route::get('/penjualan/import/template', [PenjualanController::class, 'downloadTemplate'])->name('penjualan.download-template');
+    Route::get('/penjualan/stok-outlet/{outlet}', [PenjualanController::class, 'getStokOutletJson'])->name('penjualan.stok-outlet');
 
     Route::resource('penjualan', PenjualanController::class);
 

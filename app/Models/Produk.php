@@ -31,6 +31,11 @@ class Produk extends Model
         return $this->hasMany(TransaksiDetail::class, 'produk_id', 'produk_id');
     }
 
+    public function stokOutlet()
+    {
+        return $this->hasMany(StokOutlet::class, 'produk_id', 'produk_id');
+    }
+
     // function untuk menghitung harga rata-rata
     public function getHargaRataRataAttribute()
     {

@@ -7,6 +7,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>@yield('title', 'UD Medan')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @stack('styles')
 </head>
 
 <body class="bg-gray-100 antialiased">
@@ -85,6 +86,7 @@
             });
         });
     </script>
+    @stack('scripts')
 </body>
 
 </html>

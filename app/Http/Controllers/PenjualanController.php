@@ -7,6 +7,7 @@ use App\Models\Karyawan;
 use App\Models\Outlet;
 use App\Models\Penjualan;
 use App\Models\Produk;
+use App\Models\StokOutlet;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -41,6 +42,79 @@ class PenjualanController extends Controller
         abort_unless($isAllowed, 403, 'Anda tidak memiliki hak akses!');
     }
 
+    /**
+     * Hitung sisa stok dan total terjual per outlet untuk semua produk
+     */
+    public function getOutletStockCalculation(int $outletId, ?string $excludeTransaksiNomor = null): array
+    {
+        $produks = Produk::with('kategori')->orderBy('nama_produk')->get();
+
+        $stokMasukMap = DB::table('stok_outlet')
+            ->where('outlet_id', $outletId)
+            ->pluck('stok_masuk', 'produk_id');
+
+        $stokMinMap = DB::table('stok_outlet')
+            ->where('outlet_id', $outletId)
+            ->pluck('stok_minimum', 'produk_id');
+
+        $terjualQuery = DB::table('transaksi_detail')
+            ->join('transaksi', 'transaksi.transaksi_id', '=', 'transaksi_detail.transaksi_id')
+            ->where('transaksi.outlet_id', $outletId);
+
+        if ($excludeTransaksiNomor) {
+            $terjualQuery->where('transaksi.nomor_transaksi', '!=', $excludeTransaksiNomor);
+        }
+
+        $terjualMap = $terjualQuery
+            ->select('transaksi_detail.produk_id', DB::raw('SUM(transaksi_detail.jumlah) as total_terjual'))
+            ->groupBy('transaksi_detail.produk_id')
+            ->pluck('total_terjual', 'produk_id');
+
+        $result = [];
+        foreach ($produks as $p) {
+            $masuk = isset($stokMasukMap[$p->produk_id]) ? (int) $stokMasukMap[$p->produk_id] : 0;
+            $terjual = isset($terjualMap[$p->produk_id]) ? (int) $terjualMap[$p->produk_id] : 0;
+            $sisa = max(0, $masuk - $terjual);
+            $min = isset($stokMinMap[$p->produk_id]) ? (int) $stokMinMap[$p->produk_id] : 5;
+
+            $status = 'tersedia';
+            if ($sisa <= 0) {
+                $status = 'habis';
+            } elseif ($sisa <= $min) {
+                $status = 'menipis';
+            }
+
+            $result[$p->produk_id] = [
+                'produk_id' => $p->produk_id,
+                'nama_produk' => $p->nama_produk,
+                'kategori' => $p->kategori?->nama_kategori ?? '-',
+                'stok_masuk' => $masuk,
+                'total_terjual' => $terjual,
+                'sisa_stok' => $sisa,
+                'stok_minimum' => $min,
+                'status' => $status,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Endpoint API JSON untuk mengambil status stok outlet secara dinamis
+     */
+    public function getStokOutletJson(Outlet $outlet)
+    {
+        $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG', 'Beauty Consultant', 'Sales Promotion Girl']);
+
+        $data = $this->getOutletStockCalculation($outlet->outlet_id);
+
+        return response()->json([
+            'outlet_id' => $outlet->outlet_id,
+            'nama_outlet' => $outlet->nama_outlet,
+            'stok' => $data,
+        ]);
+    }
+
     public function index(Request $request)
     {
 
@@ -71,7 +145,33 @@ class PenjualanController extends Controller
             }
         }
 
-        $penjualan = $query->latest()->paginate(10);
+        // Filter Periode (Bulan dan Tahun) menggunakan Flatpickr
+        // Default adalah bulan saat ini (Y-m), kecuali jika user memilih menampilkan semua
+        $tampilkanSemua = $request->has('semua');
+        $periode = $request->input('periode');
+
+        if (! $tampilkanSemua) {
+            if (! $periode) {
+                $periode = date('Y-m'); // Default bulan ini, misal '2026-11'
+            }
+
+            if (preg_match('/^\d{4}-\d{2}$/', $periode)) {
+                [$tahun, $bulan] = explode('-', $periode);
+                $query->whereYear('tanggal_penjualan', (int) $tahun)
+                      ->whereMonth('tanggal_penjualan', (int) $bulan);
+            }
+        } else {
+            $periode = '';
+        }
+
+        // Ringkasan omzet dan jumlah transaksi pada filter yang aktif
+        $totalOmzet = (clone $query)->sum('total_harga');
+        $totalTransaksi = (clone $query)->count();
+
+        $penjualan = $query->latest('tanggal_penjualan')
+                           ->latest('penjualan_id')
+                           ->paginate(10)
+                           ->appends($request->query());
 
         // Ambil rincian produk melalui nomor_transaksi di tabel transaksi
         $nomorTransaksis = $penjualan->getCollection()->map(function ($item) {
@@ -94,7 +194,14 @@ class PenjualanController extends Controller
             return $item;
         });
 
-        return view('penjualan.index', compact('penjualan'));
+        return view('penjualan.index', compact(
+            'penjualan',
+            'periode',
+            'tampilkanSemua',
+            'totalOmzet',
+            'totalTransaksi',
+            'namaRole'
+        ));
     }
 
     public function create()
@@ -142,7 +249,19 @@ class PenjualanController extends Controller
 
         $karyawan = Karyawan::orderBy('nama_karyawan')->get();
 
-        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin'));
+        // Tentukan outlet yang terpilih secara default
+        $defaultOutletId = old('outlet_id');
+        if (! $defaultOutletId) {
+            if ($outlet->count() === 1) {
+                $defaultOutletId = $outlet->first()->outlet_id;
+            } elseif ($outlet->isNotEmpty()) {
+                $defaultOutletId = $outlet->first()->outlet_id;
+            }
+        }
+
+        $initialStok = $defaultOutletId ? $this->getOutletStockCalculation((int) $defaultOutletId) : [];
+
+        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin', 'initialStok', 'defaultOutletId', 'namaRole'));
     }
 
     public function store(Request $request)
@@ -161,6 +280,27 @@ class PenjualanController extends Controller
             'jumlah.*' => ['required', 'integer', 'min:1'],
             'status_penjualan' => ['nullable', 'string', 'max:30'],
         ]);
+
+        // 0. Validasi Ketersediaan Sisa Stok Outlet
+        $stokData = $this->getOutletStockCalculation((int) $validated['outlet_id']);
+
+        $totalMintaPerProduk = [];
+        foreach ($validated['produk_id'] as $index => $produkId) {
+            $qty = (int) $validated['jumlah'][$index];
+            $totalMintaPerProduk[$produkId] = ($totalMintaPerProduk[$produkId] ?? 0) + $qty;
+        }
+
+        foreach ($totalMintaPerProduk as $produkId => $totalMinta) {
+            $stokItem = $stokData[$produkId] ?? null;
+            $sisaStok = $stokItem['sisa_stok'] ?? 0;
+            $namaProduk = $stokItem['nama_produk'] ?? "Produk ID {$produkId}";
+
+            if ($totalMinta > $sisaStok) {
+                return back()->withInput()->withErrors([
+                    'jumlah' => "Kuantitas untuk produk \"{$namaProduk}\" ({$totalMinta} pcs) melebihi sisa stok yang tersedia di outlet ini (Tersedia: {$sisaStok} pcs).",
+                ]);
+            }
+        }
 
         // 1. Hitung total harga
 
@@ -348,6 +488,27 @@ class PenjualanController extends Controller
             'jumlah' => ['required', 'array', 'min:1'],
             'jumlah.*' => ['required', 'integer', 'min:1'],
         ]);
+
+        // 0. Validasi Ketersediaan Sisa Stok Outlet (Kecualikan transaksi faktur ini sendiri)
+        $stokData = $this->getOutletStockCalculation((int) $validated['outlet_id'], 'TR-'.$penjualan->penjualan_id);
+
+        $totalMintaPerProduk = [];
+        foreach ($validated['produk_id'] as $index => $produkId) {
+            $qty = (int) $validated['jumlah'][$index];
+            $totalMintaPerProduk[$produkId] = ($totalMintaPerProduk[$produkId] ?? 0) + $qty;
+        }
+
+        foreach ($totalMintaPerProduk as $produkId => $totalMinta) {
+            $stokItem = $stokData[$produkId] ?? null;
+            $sisaStok = $stokItem['sisa_stok'] ?? 0;
+            $namaProduk = $stokItem['nama_produk'] ?? "Produk ID {$produkId}";
+
+            if ($totalMinta > $sisaStok) {
+                return back()->withInput()->withErrors([
+                    'jumlah' => "Kuantitas untuk produk \"{$namaProduk}\" ({$totalMinta} pcs) melebihi sisa stok yang tersedia di outlet ini (Tersedia: {$sisaStok} pcs).",
+                ]);
+            }
+        }
 
         $outlet = Outlet::findOrFail($validated['outlet_id']);
         $total_harga = 0;
