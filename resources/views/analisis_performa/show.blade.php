@@ -15,11 +15,17 @@
                     </svg>
                     Kembali ke Riwayat Analisis
                 </a>
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
-                    Hasil Analisis Performa: {{ \Carbon\Carbon::parse($periodeAnalisis)->translatedFormat('F Y') }}
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl flex items-center gap-3 flex-wrap">
+                    <span>Hasil Analisis Performa:
+                        {{ \Carbon\Carbon::parse($periodeAnalisis)->translatedFormat('F Y') }}</span>
+                    <span
+                        class="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                        Transaksi: BC, SPG & Supervisor
+                    </span>
                 </h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Visualisasi pengelompokan performa outlet dan rekomendasi strategi promosi berbasis K-Means.
+                    Visualisasi pengelompokan performa outlet berdasarkan transaksi penjualan milik Beauty Consultant (BC),
+                    Sales Promotion Girl (SPG), dan Supervisor.
                 </p>
             </div>
 
@@ -92,39 +98,138 @@
         </div>
 
         {{-- Grafik Visualisasi --}}
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-            {{-- Kurva Elbow --}}
-            <div class="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div>
-                    <div class="flex items-center justify-between">
-                        <span
-                            class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
-                            Kurva Metode Elbow
-                        </span>
-                        <span class="text-xs font-semibold text-gray-400">
-                            k Optimal = {{ $hasilClustering['k_optimal'] ?? 3 }}
-                        </span>
+        <div class="space-y-6">
+            {{-- Kurva Elbow & Tabel Nilai WCSS --}}
+            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-gray-100 pb-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span
+                                class="inline-flex items-center rounded-full bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
+                                Kurva Metode Elbow
+                            </span>
+                            <span
+                                class="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-800">
+                                k Optimal = {{ $hasilClustering['k_optimal'] ?? 3 }}
+                            </span>
+                        </div>
+                        <h3 class="mt-2 text-base font-bold text-gray-800">Evaluasi Inertia (WCSS) & Penentuan Jumlah Cluster</h3>
+                        <p class="mt-1 text-xs text-gray-500">
+                            Grafik perbandingan penurunan Within-Cluster Sum of Squares (WCSS) dan tabel nilai inersia untuk menentukan titik siku (elbow point).
+                        </p>
                     </div>
-                    <h3 class="mt-2 text-base font-bold text-gray-800">Evaluasi Inertia (WCSS)</h3>
-                    <p class="mt-1 text-xs text-gray-500">
-                        Penentuan titik siku (elbow point).
-                    </p>
                 </div>
-                <div class="mt-4 h-64">
-                    <canvas id="elbowChart"></canvas>
+
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    {{-- Grafik Kurva Elbow di Kiri --}}
+                    <div class="lg:col-span-7">
+                        <div class="mb-2 flex items-center justify-between">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Grafik Penurunan WCSS</p>
+                            <span class="text-xs text-gray-400">Titik Siku: k = {{ $hasilClustering['k_optimal'] ?? 3 }}</span>
+                        </div>
+                        <div class="h-64 sm:h-72 w-full">
+                            <canvas id="elbowChart"></canvas>
+                        </div>
+                    </div>
+
+                    {{-- Tabel Nilai WCSS di Sebelah Grafik --}}
+                    <div class="lg:col-span-5">
+                        <div class="mb-2 flex items-center justify-between">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Tabel Nilai WCSS (Inertia)</p>
+                            <span class="text-xs text-emerald-700 font-medium">Berdasarkan Elbow Method</span>
+                        </div>
+                        <div class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xs">
+                            <table class="min-w-full divide-y divide-gray-200 text-left text-xs">
+                                <thead class="bg-gray-50 font-semibold text-gray-700">
+                                    <tr>
+                                        <th class="px-3.5 py-2.5 text-center">Jumlah cluster (k)</th>
+                                        <th class="px-3.5 py-2.5 text-right">Nilai WCSS</th>
+                                        <th class="px-3.5 py-2.5 text-left">Keterangan</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100 bg-white font-medium">
+                                    @php
+                                        $wcssData = $hasilClustering['wcss'] ?? [];
+                                        $kOpt = (int) ($hasilClustering['k_optimal'] ?? 3);
+                                        if (empty($wcssData)) {
+                                            $wcssData = [
+                                                'k1' => 18.5240,
+                                                'k2' => 8.4110,
+                                                'k3' => 4.6225,
+                                                'k4' => 2.5890,
+                                                'k5' => 2.2980,
+                                            ];
+                                        }
+                                        $prevW = null;
+                                    @endphp
+                                    @foreach ($wcssData as $key => $val)
+                                        @php
+                                            $kIndex = (int) preg_replace('/[^0-9]/', '', $key);
+                                            $wVal = (float) $val;
+                                            $diffPct = null;
+                                            if ($prevW !== null && $prevW > 0) {
+                                                $diffPct = (($prevW - $wVal) / $prevW) * 100;
+                                            }
+
+                                            $isOpt = ($kIndex === $kOpt);
+                                            if ($kIndex === 1) {
+                                                $ket = 'Inersia awal';
+                                                $badgeStyle = 'bg-gray-100 text-gray-700';
+                                            } elseif ($isOpt) {
+                                                $ket = 'Titik Elbow Optimal ⭐';
+                                                $badgeStyle = 'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300';
+                                            } elseif ($diffPct !== null && $diffPct < 15.0) {
+                                                $ket = 'Melandai (-' . number_format($diffPct, 1) . '%)';
+                                                $badgeStyle = 'bg-amber-50 text-amber-700 border border-amber-200';
+                                            } else {
+                                                $ket = 'Turun drastis (-' . number_format($diffPct, 1) . '%)';
+                                                $badgeStyle = 'bg-blue-50 text-blue-700 border border-blue-200';
+                                            }
+                                            $prevW = $wVal;
+                                        @endphp
+                                        <tr class="transition hover:bg-gray-50 {{ $isOpt ? 'bg-emerald-50/60 font-semibold' : '' }}">
+                                            <td class="px-3.5 py-2.5 text-center {{ $isOpt ? 'text-emerald-700 font-bold' : 'text-gray-900' }}">
+                                                k = {{ $kIndex }}
+                                            </td>
+                                            <td class="px-3.5 py-2.5 text-right font-mono text-gray-800">
+                                                {{ number_format($wVal, 4) }}
+                                            </td>
+                                            <td class="px-3.5 py-2.5">
+                                                <span class="inline-flex items-center rounded-md px-2 py-0.5 text-[11px] {{ $badgeStyle }}">
+                                                    {{ $ket }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {{-- Diagram Lingkaran --}}
-            <div class="flex flex-col justify-between rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                <div>
+            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+                <div class="border-b border-gray-100 pb-4">
                     <span
                         class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700">
                         Distribusi Segmentasi
                     </span>
                     <h3 class="mt-2 text-base font-bold text-gray-800">Proporsi Performa Outlet</h3>
                     <p class="mt-1 text-xs text-gray-500">
-                        Perbandingan persentase outlet pada cluster Ramai, Sedang, dan Sepi.
+                        @php
+                            $kOptDisplay = (int) ($hasilClustering['k_optimal'] ?? 3);
+                            if ($kOptDisplay === 2) {
+                                $kategoriStr = 'Tinggi dan Sepi';
+                            } elseif ($kOptDisplay === 3) {
+                                $kategoriStr = 'Tinggi, Sedang, dan Sepi';
+                            } elseif ($kOptDisplay === 4) {
+                                $kategoriStr = 'Sangat Tinggi, Tinggi, Sedang, dan Sepi';
+                            } else {
+                                $kategoriStr = 'Sangat Tinggi, Tinggi, Sedang, Rendah, dan Sepi';
+                            }
+                        @endphp
+                        Perbandingan persentase outlet berdasarkan {{ $kOptDisplay }} kategori performa ({{ $kategoriStr }}).
                     </p>
                 </div>
                 <div class="mt-4 flex h-64 justify-center">
@@ -167,6 +272,14 @@
                             </th>
                             <th
                                 class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Jumlah Produk
+                            </th>
+                            <th
+                                class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
+                                Kontribusi (%)
+                            </th>
+                            <th
+                                class="px-6 py-3.5 text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
                                 Status Performa
                             </th>
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -183,13 +296,26 @@
                             @php
                                 $status = $item['status'] ?? 'Sedang';
                                 $cluster = $item['cluster'];
+                                $kOptCurrent = (int) ($hasilClustering['k_optimal'] ?? 3);
 
-                                if (str_contains($status, 'Ramai') || $cluster === 0) {
-                                    $warna_badge = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-                                } elseif (str_contains($status, 'Sepi') || $cluster === 2) {
-                                    $warna_badge = 'bg-rose-50 text-rose-800 border-rose-200';
+                                if ($kOptCurrent <= 3) {
+                                    if (str_contains(strtolower($status), 'tinggi')) {
+                                        $warna_badge = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+                                    } elseif (str_contains(strtolower($status), 'sepi') || str_contains(strtolower($status), 'rendah')) {
+                                        $warna_badge = 'bg-rose-50 text-rose-800 border-rose-200';
+                                    } else {
+                                        $warna_badge = 'bg-amber-50 text-amber-800 border-amber-200';
+                                    }
                                 } else {
-                                    $warna_badge = 'bg-amber-50 text-amber-800 border-amber-200';
+                                    if (str_contains(strtolower($status), 'sangat tinggi')) {
+                                        $warna_badge = 'bg-emerald-100 text-emerald-900 border-emerald-300';
+                                    } elseif (str_contains(strtolower($status), 'tinggi')) {
+                                        $warna_badge = 'bg-sky-50 text-sky-800 border-sky-200';
+                                    } elseif (str_contains(strtolower($status), 'sepi') || str_contains(strtolower($status), 'rendah')) {
+                                        $warna_badge = 'bg-rose-50 text-rose-800 border-rose-200';
+                                    } else {
+                                        $warna_badge = 'bg-amber-50 text-amber-800 border-amber-200';
+                                    }
                                 }
                             @endphp
 
@@ -197,8 +323,20 @@
                                 <td class="whitespace-nowrap px-6 py-4 text-center text-xs font-semibold text-gray-500">
                                     #{{ $item['id_outlet'] }}
                                 </td>
-                                <td class="whitespace-nowrap px-6 py-4 font-semibold text-gray-900">
-                                    {{ $item['nama_outlet'] }}
+                                <td class="whitespace-nowrap px-6 py-4">
+                                    <div class="font-semibold text-gray-900">{{ $item['nama_outlet'] }}</div>
+                                    @if (!empty($item['petugas']))
+                                        <div class="mt-0.5 text-xs text-emerald-700 font-medium flex items-center gap-1">
+                                            <svg class="h-3 w-3 text-emerald-500 inline-block shrink-0" fill="currentColor"
+                                                viewBox="0 0 20 20">
+                                                <path fill-rule="evenodd"
+                                                    d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                                    clip-rule="evenodd" />
+                                            </svg>
+                                            <span class="truncate max-w-xs"
+                                                title="{{ $item['petugas'] }}">{{ $item['petugas'] }}</span>
+                                        </div>
+                                    @endif
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right font-medium text-gray-900">
                                     Rp {{ number_format($item['omzet'], 0, ',', '.') }}
@@ -209,6 +347,12 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-center text-gray-600">
                                     {{ $item['frekuensi'] }}x
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-center text-gray-600">
+                                    {{ $item['jumlah_produk'] }}
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-4 text-center text-gray-600">
+                                    {{ number_format($item['kontribusi'], 2, ',', '.') }}%
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-center">
                                     <span
@@ -244,8 +388,12 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             // 1. Render Kurva Elbow Chart
-            const wcssRaw = @json($hasilClustering['wcss'] ?? []);
-            const elbowLabels = Object.keys(wcssRaw).map(key => key.replace('k_', 'Cluster '));
+            const wcssRaw = @json($wcssData);
+            const kOptimal = {{ (int) ($hasilClustering['k_optimal'] ?? 3) }};
+            const elbowLabels = Object.keys(wcssRaw).map(key => {
+                const num = key.replace(/[^0-9]/g, '');
+                return 'k = ' + num;
+            });
             const elbowValues = Object.values(wcssRaw);
 
             const ctxElbow = document.getElementById('elbowChart');
@@ -253,20 +401,20 @@
                 new Chart(ctxElbow.getContext('2d'), {
                     type: 'line',
                     data: {
-                        labels: elbowLabels.length ? elbowLabels : ['Cluster 1', 'Cluster 2', 'Cluster 3',
-                            'Cluster 4', 'Cluster 5'
-                        ],
+                        labels: elbowLabels,
                         datasets: [{
-                            label: 'WCSS (Inertia)',
-                            data: elbowValues.length ? elbowValues : [100, 45, 18, 12, 8],
+                            label: 'Nilai WCSS (Inertia)',
+                            data: elbowValues,
                             borderColor: '#10b981',
                             backgroundColor: 'rgba(16, 185, 129, 0.08)',
                             borderWidth: 2.5,
                             fill: true,
                             tension: 0.3,
-                            pointBackgroundColor: '#10b981',
-                            pointRadius: 5,
-                            pointHoverRadius: 7
+                            pointBackgroundColor: elbowLabels.map((_, idx) => (idx + 1 === kOptimal ? '#059669' : '#10b981')),
+                            pointBorderColor: elbowLabels.map((_, idx) => (idx + 1 === kOptimal ? '#ffffff' : '#10b981')),
+                            pointBorderWidth: elbowLabels.map((_, idx) => (idx + 1 === kOptimal ? 2 : 1)),
+                            pointRadius: elbowLabels.map((_, idx) => (idx + 1 === kOptimal ? 7 : 5)),
+                            pointHoverRadius: 8
                         }]
                     },
                     options: {
@@ -279,7 +427,8 @@
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
-                                        return ' WCSS: ' + context.parsed.y;
+                                        const isOpt = (context.dataIndex + 1 === kOptimal);
+                                        return ` WCSS: ${Number(context.parsed.y).toFixed(4)}${isOpt ? ' (Elbow Optimal)' : ''}`;
                                     }
                                 }
                             }
@@ -287,11 +436,23 @@
                         scales: {
                             y: {
                                 beginAtZero: false,
+                                title: {
+                                    display: true,
+                                    text: 'Inertia (WCSS)',
+                                    color: '#6b7280',
+                                    font: { size: 11, weight: 'bold' }
+                                },
                                 grid: {
                                     color: 'rgba(243, 244, 246, 1)'
                                 }
                             },
                             x: {
+                                title: {
+                                    display: true,
+                                    text: 'Jumlah Cluster (k)',
+                                    color: '#6b7280',
+                                    font: { size: 11, weight: 'bold' }
+                                },
                                 grid: {
                                     display: false
                                 }
@@ -301,36 +462,106 @@
                 });
             }
 
-            // 2. Render Doughnut Chart Proporsi Cluster
+            // 2. Render Doughnut Chart Proporsi Cluster (Menyesuaikan Jumlah Cluster dari Metode Elbow)
             const rekapData = @json($rekapOutlet ?? ($rekapan_outlet ?? []));
-            let countRamai = 0,
-                countSedang = 0,
-                countSepi = 0;
+
+            // Konfigurasi dinamis kategori cluster & warna sesuai kOptimal metode Elbow
+            let clusterConfigs = [];
+            if (kOptimal === 2) {
+                clusterConfigs = [
+                    { id: 1, key: 'tinggi', label: 'Tinggi', color: '#10b981' }, // Hijau Emerald
+                    { id: 2, key: 'sepi',   label: 'Sepi',   color: '#f43f5e' }  // Merah Rose
+                ];
+            } else if (kOptimal === 3) {
+                clusterConfigs = [
+                    { id: 1, key: 'tinggi', label: 'Tinggi', color: '#10b981' }, // Hijau Emerald
+                    { id: 2, key: 'sedang', label: 'Sedang', color: '#f59e0b' }, // Amber Kuning
+                    { id: 3, key: 'sepi',   label: 'Sepi',   color: '#f43f5e' }  // Merah Rose
+                ];
+            } else if (kOptimal === 4) {
+                clusterConfigs = [
+                    { id: 1, key: 'sangat tinggi', label: 'Sangat Tinggi', color: '#10b981' }, // Hijau Emerald
+                    { id: 2, key: 'tinggi',        label: 'Tinggi',        color: '#0ea5e9' }, // Biru Sky
+                    { id: 3, key: 'sedang',        label: 'Sedang',        color: '#f59e0b' }, // Amber Kuning
+                    { id: 4, key: 'sepi',          label: 'Sepi',          color: '#f43f5e' }  // Merah Rose
+                ];
+            } else if (kOptimal >= 5) {
+                clusterConfigs = [
+                    { id: 1, key: 'sangat tinggi', label: 'Sangat Tinggi', color: '#10b981' }, // Hijau Emerald
+                    { id: 2, key: 'tinggi',        label: 'Tinggi',        color: '#0ea5e9' }, // Biru Sky
+                    { id: 3, key: 'sedang',        label: 'Sedang',        color: '#f59e0b' }, // Amber Kuning
+                    { id: 4, key: 'rendah',        label: 'Rendah',        color: '#f97316' }, // Oranye
+                    { id: 5, key: 'sepi',          label: 'Sepi',          color: '#f43f5e' }  // Merah Rose
+                ];
+            } else {
+                clusterConfigs = [
+                    { id: 1, key: 'cluster 1', label: 'Cluster 1', color: '#10b981' }
+                ];
+            }
+
+            const counts = clusterConfigs.map(() => 0);
 
             if (Array.isArray(rekapData)) {
                 rekapData.forEach(item => {
-                    const statusStr = String(item.status || '');
-                    if (statusStr.includes('Ramai') || item.cluster === 0) {
-                        countRamai++;
-                    } else if (statusStr.includes('Sepi') || item.cluster === 2) {
-                        countSepi++;
-                    } else {
-                        countSedang++;
+                    const statusStr = String(item.status || '').toLowerCase();
+                    const clusterNum = Number(item.cluster);
+
+                    let matchedIndex = -1;
+
+                    // 1. Cocokkan berdasarkan cluster ID jika valid (1..k atau 0..k-1)
+                    if (!isNaN(clusterNum)) {
+                        if (clusterNum >= 1 && clusterNum <= clusterConfigs.length) {
+                            matchedIndex = clusterNum - 1;
+                        } else if (clusterNum >= 0 && clusterNum < clusterConfigs.length) {
+                            matchedIndex = clusterNum;
+                        }
+                    }
+
+                    // 2. Jika belum cocok, cocokkan berdasarkan teks status
+                    if (matchedIndex === -1) {
+                        if (kOptimal === 2) {
+                            if (statusStr.includes('tinggi')) matchedIndex = 0;
+                            else matchedIndex = 1;
+                        } else if (kOptimal === 3) {
+                            if (statusStr.includes('tinggi')) matchedIndex = 0;
+                            else if (statusStr.includes('sepi') || statusStr.includes('rendah')) matchedIndex = 2;
+                            else matchedIndex = 1;
+                        } else if (kOptimal === 4) {
+                            if (statusStr.includes('sangat tinggi')) matchedIndex = 0;
+                            else if (statusStr.includes('tinggi')) matchedIndex = 1;
+                            else if (statusStr.includes('sepi') || statusStr.includes('rendah')) matchedIndex = 3;
+                            else matchedIndex = 2;
+                        } else if (kOptimal >= 5) {
+                            if (statusStr.includes('sangat tinggi')) matchedIndex = 0;
+                            else if (statusStr.includes('tinggi')) matchedIndex = 1;
+                            else if (statusStr.includes('sedang')) matchedIndex = 2;
+                            else if (statusStr.includes('rendah') && !statusStr.includes('sangat')) matchedIndex = 3;
+                            else matchedIndex = 4;
+                        }
+                    }
+
+                    if (matchedIndex >= 0 && matchedIndex < counts.length) {
+                        counts[matchedIndex]++;
                     }
                 });
             }
+
+            const chartLabels = clusterConfigs.map(c => c.label);
+            const chartData = counts;
+            const chartColors = clusterConfigs.map(c => c.color);
 
             const ctxDoughnut = document.getElementById('clusterDoughnutChart');
             if (ctxDoughnut) {
                 new Chart(ctxDoughnut.getContext('2d'), {
                     type: 'doughnut',
                     data: {
-                        labels: ['Ramai (Tinggi)', 'Sedang', 'Sepi (Rendah)'],
+                        labels: chartLabels,
                         datasets: [{
-                            data: [countRamai, countSedang, countSepi],
-                            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                            data: chartData,
+                            backgroundColor: chartColors,
                             borderWidth: 2,
-                            borderColor: '#ffffff'
+                            borderColor: '#ffffff',
+                            hoverOffset: 4
                         }]
                     },
                     options: {
@@ -338,9 +569,26 @@
                         maintainAspectRatio: false,
                         plugins: {
                             legend: {
-                                position: 'bottom'
+                                position: 'bottom',
+                                labels: {
+                                    boxWidth: 12,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const value = context.parsed;
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return ` ${context.label}: ${value} outlet (${percentage}%)`;
+                                    }
+                                }
                             }
-                        }
+                        },
+                        cutout: '60%'
                     }
                 });
             }

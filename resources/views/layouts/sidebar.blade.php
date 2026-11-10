@@ -24,7 +24,10 @@
                     ]))
                     <a href="{{ route('dashboard') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('dashboard*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📊</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                        </svg>
                         <span>Dashboard</span>
                     </a>
                 @endif
@@ -38,7 +41,10 @@
                     ]))
                     <a href="{{ route('penjualan.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.*') && !request()->routeIs('penjualan.import*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📈</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
                         <span>Penjualan</span>
                     </a>
                 @endif
@@ -52,7 +58,12 @@
                     ]))
                     <a href="{{ route('analisis-performa.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('analisis-performa*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">🧠</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                        </svg>
                         <span>Analisis</span>
                     </a>
                 @endif
@@ -61,7 +72,10 @@
                     {{-- Import Excel --}}
                     <a href="{{ route('penjualan.import.form') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.import*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📥</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
                         <span>Import Excel</span>
                     </a>
                 @endif
@@ -76,27 +90,44 @@
                 <div class="space-y-1">
                     <a href="{{ route('outlet.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('outlet*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">🏪</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                        </svg>
                         <span>Outlet</span>
                     </a>
                     <a href="{{ route('wilayah.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('wilayah*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📍</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
                         <span>Wilayah</span>
                     </a>
                     <a href="{{ route('kategori.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('kategori*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">🏷️</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
                         <span>Kategori Produk</span>
                     </a>
                     <a href="{{ route('produk.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('produk*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📦</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
                         <span>Produk</span>
                     </a>
                     <a href="{{ route('harga-produk.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('harga-produk*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">💵</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
                         <span>Harga Wilayah</span>
                     </a>
                 </div>
@@ -107,75 +138,54 @@
         @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
             <div>
                 <p class="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Manajemen Karyawan</p>
-                <a href="{{ route('karyawan.index') }}"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('karyawan*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-black' }}">
-                    <span class="text-lg">
-                        <svg class="h-6 w-6 text-black hover:text-white" viewBox="0 0 100 100"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M74.8,20.3H25.2a5,5,0,0,0-5,5V59.6a5,5,0,0,0,5,5H74.7a5,5,0,0,0,5-5V25.2A4.91,4.91,0,0,0,74.8,20.3ZM72.3,55.2a2,2,0,0,1-1.9,1.9H29.6a1.9,1.9,0,0,1-1.9-1.9V29.6a2,2,0,0,1,1.9-1.9H70.3a2,2,0,0,1,2,1.9Z" />
-                            <path
-                                d="M41.3,72.3a5,5,0,0,0-5,5v.6a2,2,0,0,0,1.9,1.9H61.7a2,2,0,0,0,1.9-1.9v-.6a5,5,0,0,0-5-5Z" />
-                            <circle cx="50.1" cy="37.6" r="5.8" />
-                            <path
-                                d="M50.2,44.4h-.4a8.83,8.83,0,0,0-8.7,7.5c0,.4.1,1.2,1.5,1.2H57.5c1.4,0,1.5-.9,1.5-1.2A9,9,0,0,0,50.2,44.4Z" />
+                <div class="space-y-1">
+                    <a href="{{ route('karyawan.index') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('karyawan*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
-                    </span>
-                    <span>Karyawan</span>
-                </a>
-                <a href="{{ route('bc.index') }}"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('bc*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-black' }}">
-                    <span class="text-lg">
-                        <svg class="h-6 w-6 text-black hover:text-white" viewBox="0 0 32 32"
-                            xmlns="http://www.w3.org/2000/svg">
-                            <path
-                                d="M16 15.503A5.041 5.041 0 1 0 16 5.42a5.041 5.041 0 0 0 0 10.083zm0 2.215c-6.703 0-11 3.699-11 5.5v3.363h22v-3.363c0-2.178-4.068-5.5-11-5.5z" />
+                        <span>Karyawan</span>
+                    </a>
+                    <a href="{{ route('bc.index') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('bc*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                    </span>
-                    <span>Beauty Consultant</span>
-                </a>
-                <a href="{{ route('spg.index') }}"
-                    class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('spg*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-black' }}">
-                    <span class="text-lg">
-                        <svg class="h-6 w-6 text-black hover:text-white" version="1.1" id="_x32_"
-                            xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-                            viewBox="0 0 512 512" xml:space="preserve">
-                            <g>
-                                <path class="st0" d="M194.651,414.476c16.23,0,61.349,0,61.349,0s45.111,0,61.35,0c16.222,0,23.587-23.603,14.198-40.285
-  c-7.072-12.572-18.659-26.826-37.516-34.921c-10.793,7.556-23.905,12-38.032,12c-14.143,0-27.238-4.444-38.032-12
-  c-18.864,8.095-30.444,22.349-37.523,34.921C171.064,390.873,178.421,414.476,194.651,414.476z" />
-                                <path class="st0" d="M256,335.476c27.714,0,50.167-22.444,50.167-50.159v-12.016c0-27.714-22.452-50.174-50.167-50.174
-  c-27.714,0-50.174,22.46-50.174,50.174v12.016C205.826,313.032,228.286,335.476,256,335.476z" />
-                                <path class="st0" d="M404.977,56.889h-75.834v16.254c0,31.365-25.524,56.889-56.889,56.889h-32.508
-  c-31.365,0-56.889-25.524-56.889-56.889V56.889h-75.833c-25.445,0-46.072,20.627-46.072,46.071v362.969
-  c0,25.444,20.627,46.071,46.072,46.071h297.952c25.444,0,46.071-20.627,46.071-46.071V102.96
-  C451.048,77.516,430.421,56.889,404.977,56.889z M402.286,463.238H109.714V150.349h292.572V463.238z" />
-                                <path class="st0" d="M239.746,113.778h32.508c22.406,0,40.635-18.23,40.635-40.635V40.635C312.889,18.23,294.659,0,272.254,0
-  h-32.508c-22.405,0-40.635,18.23-40.635,40.635v32.508C199.111,95.547,217.341,113.778,239.746,113.778z M231.619,40.635
-  c0-4.492,3.635-8.127,8.127-8.127h32.508c4.493,0,8.127,3.635,8.127,8.127v16.254c0,4.492-3.634,8.127-8.127,8.127h-32.508
-  c-4.492,0-8.127-3.635-8.127-8.127V40.635z" />
-                            </g>
+                        <span>Beauty Consultant</span>
+                    </a>
+                    <a href="{{ route('spg.index') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('spg*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                         </svg>
-                    </span>
-                    <span>Sales Promotion Girl</span>
-                </a>
+                        <span>Sales Promotion Girl</span>
+                    </a>
+                </div>
             </div>
         @endif
 
         {{-- Group Promosi --}}
-
         @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
             <div>
                 <p class="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Promosi</p>
                 <div class="space-y-1">
                     <a href="{{ route('promosi.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('promosi*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">🎁</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                        </svg>
                         <span>Promosi</span>
                     </a>
                     <a href="{{ route('jadwal-promosi.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('jadwal-promosi*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📅</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
                         <span>Jadwal Promosi</span>
                     </a>
                 </div>
@@ -189,7 +199,10 @@
                 <div class="space-y-1">
                     <a href="{{ route('transaksi-detail.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('transaksi-detail*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
-                        <span class="text-lg">📄</span>
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
                         <span>Detail Transaksi</span>
                     </a>
                 </div>
@@ -201,17 +214,12 @@
         <form action="{{ route('logout') }}" method="POST">
             @csrf
             <button type="submit"
-                class="group flex items-center gap-3 w-full rounded-xl px-4 py-2.5 text-md text-semibold transition-all duration-100 bg-blue-100 text-black hover:bg-blue-600 hover:text-white">
-                <span>
-                    <svg class="h-5 w-5 text-black hover:text-white" viewBox="0 0 24 24" fill="none"
-                        xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M9.00195 7C9.01406 4.82497 9.11051 3.64706 9.87889 2.87868C10.7576 2 12.1718 2 15.0002 2L16.0002 2C18.8286 2 20.2429 2 21.1215 2.87868C22.0002 3.75736 22.0002 5.17157 22.0002 8L22.0002 16C22.0002 18.8284 22.0002 20.2426 21.1215 21.1213C20.2429 22 18.8286 22 16.0002 22H15.0002C12.1718 22 10.7576 22 9.87889 21.1213C9.11051 20.3529 9.01406 19.175 9.00195 17"
-                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <path d="M15 12L2 12M2 12L5.5 9M2 12L5.5 15" stroke="currentColor" stroke-width="1.5"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </span>
+                class="group flex items-center gap-3 w-full rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 bg-blue-50 text-blue-700 hover:bg-red-600 hover:text-white">
+                <svg class="h-5 w-5 shrink-0 transition-colors duration-150" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
                 <span>Logout</span>
             </button>
         </form>

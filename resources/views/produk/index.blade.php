@@ -93,7 +93,11 @@
                 @if ($produk->isEmpty())
                     <div class="px-6 py-16 text-center">
                         @if (request('search') || request('kategori_id'))
-                            <div class="text-4xl">🔍</div>
+                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-500">
+                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
                             <h3 class="mt-4 font-semibold text-gray-900">Tidak ada produk yang cocok</h3>
                             <p class="mt-2 text-sm text-gray-500">Coba ubah kata kunci pencarian atau kategori filter.</p>
                             <a href="{{ route('produk.index') }}"
@@ -101,7 +105,11 @@
                                 Reset Filter
                             </a>
                         @else
-                            <div class="text-4xl">📦</div>
+                            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                            <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
                             <h3 class="mt-4 font-semibold text-gray-900">Belum ada data produk</h3>
                             <p class="mt-2 text-sm text-gray-500">Tambahkan produk untuk mulai mengelola data penjualan.</p>
                             <a href="{{ route('produk.create') }}"

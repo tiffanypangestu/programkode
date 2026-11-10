@@ -5,12 +5,12 @@ echo ========================================
 echo.
 
 echo [1/2] Menjalankan FastAPI di port 8001...
-start "FastAPI Server" cmd /k "cd /d c:\Users\tiffany\programkode && venv\Scripts\uvicorn.exe main:app --host 127.0.0.1 --port 8001 --reload"
+start "FastAPI Server" cmd /k "cd /d %~dp0 && venv\Scripts\uvicorn.exe main:app --host 127.0.0.1 --port 8001 --reload"
 
 timeout /t 2 /nobreak >nul
 
 echo [2/2] Menjalankan Laravel di port 8000...
-start "Laravel Server" cmd /k "cd /d c:\Users\tiffany\programkode && php artisan serve --port=8000"
+start "Laravel Server" cmd /k "cd /d %~dp0 && php artisan serve --port=8000"
 
 echo.
 echo ========================================

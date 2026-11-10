@@ -66,7 +66,7 @@ class PenjualanController extends Controller
         }
 
         $terjualMap = $terjualQuery
-            ->select('transaksi_detail.produk_id', DB::raw('SUM(transaksi_detail.jumlah) as total_terjual'))
+            ->selectRaw('transaksi_detail.produk_id, SUM(transaksi_detail.jumlah) as total_terjual')
             ->groupBy('transaksi_detail.produk_id')
             ->pluck('total_terjual', 'produk_id');
 

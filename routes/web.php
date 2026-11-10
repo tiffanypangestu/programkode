@@ -125,6 +125,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/penjualan/import', [PenjualanImportController::class, 'create'])->name('penjualan.import.form');
 
     Route::post('/penjualan/import', [PenjualanImportController::class, 'store'])->name('penjualan.import.store');
+
+    Route::post('/penjualan/import/batch', [PenjualanImportController::class, 'processBatch'])->name('penjualan.import.batch');
+
+    Route::get('/penjualan/import/progress', [PenjualanImportController::class, 'progress'])->name('penjualan.import.progress');
     Route::get('/penjualan/{penjualan}/pdf', [PenjualanController::class, 'downloadPdf'])->name('penjualan.pdf');
 
     Route::get('/penjualan/import/template', [PenjualanController::class, 'downloadTemplate'])->name('penjualan.download-template');

@@ -7,10 +7,14 @@
         {{-- Header & Form Jalankan Analisis --}}
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                     <span
                         class="inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
                         K-Means Clustering
+                    </span>
+                    <span
+                        class="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-800">
+                        Transaksi BC, SPG & Supervisor
                     </span>
                     <span class="text-xs text-gray-500">5 Indikator Variabel</span>
                 </div>
@@ -18,7 +22,7 @@
                     Analisis Performa Outlet
                 </h1>
                 <p class="mt-1 text-sm text-gray-500">
-                    Pengelompokan performa outlet berdasarkan Omzet, Growth, Kontribusi, Frekuensi, dan Volume Produk.
+                    Pengelompokan performa outlet berdasarkan transaksi penjualan milik Beauty Consultant (BC), Sales Promotion Girl (SPG), dan Supervisor.
                 </p>
             </div>
 
@@ -69,8 +73,11 @@
         {{-- Stat Cards --}}
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-2xl">
-                    📊
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-50 text-green-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
                 </div>
                 <div>
                     <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Histori Analisis</p>
@@ -80,8 +87,11 @@
             </div>
 
             <div class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
-                    📈
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                    </svg>
                 </div>
                 <div>
                     <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Silhouette Score Terakhir</p>
@@ -94,8 +104,13 @@
 
             <div
                 class="flex items-center gap-4 rounded-2xl border border-gray-200 bg-white p-5 shadow-sm sm:col-span-2 lg:col-span-1">
-                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-2xl">
-                    🎯
+                <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                            d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                            d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                    </svg>
                 </div>
                 <div>
                     <p class="text-xs font-medium uppercase tracking-wider text-gray-500">Metode & Indikator</p>

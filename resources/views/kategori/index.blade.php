@@ -43,7 +43,11 @@
 
                 @if ($kategori->isEmpty())
                     <div class="px-6 py-16 text-center">
-                        <div class="text-4xl">🏷️</div>
+                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                        <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                    </div>
                         <h3 class="mt-4 font-semibold text-gray-900">Belum ada data kategori</h3>
                         <p class="mt-2 text-sm text-gray-500">Tambahkan kategori untuk mengelompokkan produk.</p>
                         <a href="{{ route('kategori.create') }}"

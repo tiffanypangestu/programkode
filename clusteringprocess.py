@@ -5,29 +5,38 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from typing import List, Dict, Any
 
-def metode_elbow(wcss_list: list, threshold: float = 0.15) -> int:
+def metode_elbow(wcss_list: list) -> int:
     """
     PEMBUKTIAN K OPTIMAL (METODE ELBOW):
-    Menghitung K Optimal secara kuantitatif berdasarkan rasio penurunan WCSS.
-    Ketika penambahan nilai K hanya menurunkan WCSS < 15% (threshold = 0.15),
+    Menghitung K Optimal secara adaptif berdasarkan rasio penurunan WCSS (Inertia).
+    Titik siku (elbow point) adalah titik di mana penurunan WCSS melambat secara drastis
+    (rasio penurunan drop_{k-1} terhadap drop_k bernilai maksimal).
+    Jika pola data optimal pada 3 cluster maka menghasilkan 3, jika 4 maka 4.
     """
     titik_n = len(wcss_list)
-    if titik_n < 2:
-        return 1
+    if titik_n < 3:
+        return max(2, titik_n)
 
+    drops = []
     for i in range(titik_n - 1):
-        wcss_sebelum = wcss_list[i]
-        wcss_sesudah = wcss_list[i + 1]
+        prev_w = float(wcss_list[i])
+        next_w = float(wcss_list[i + 1])
+        drops.append(max(0.0001, prev_w - next_w))
 
-        # Rumus Rasio Persentase Penurunan WCSS
-        penurunan = (wcss_sebelum - wcss_sesudah) / wcss_sebelum
+    ratios = []
+    for i in range(len(drops) - 1):
+        prev_drop = drops[i]
+        next_drop = drops[i + 1]
+        r = prev_drop / next_drop if next_drop > 0 else 1.0
+        ratios.append(r)
 
-        # Titik Elbow Terbukti: Penurunan sudah melandai (< 15%)
-        if penurunan < threshold:
-            k_optimal = i + 1
-            return max(2, k_optimal)
+    if not ratios:
+        return 3
 
-    return max(2, titik_n - 1)
+    best_idx = int(np.argmax(ratios))
+    k_optimal = best_idx + 2  # index 0 -> k=2, index 1 -> k=3, index 2 -> k=4
+
+    return max(2, min(k_optimal, titik_n - 1))
 
 
 def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
@@ -94,30 +103,61 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
         cluster_omzet_mean = df.groupby('cluster')['omzet'].mean().sort_values(ascending=False)
         urutan_map = {cluster_id: idx for idx, cluster_id in enumerate(cluster_omzet_mean.index)}
 
-        # 9. Pemetaan Status & Rekomendasi 
+        # 9. Pemetaan Status & Rekomendasi Sesuai Jumlah Cluster (k_optimal Metode Elbow)
         hasil_keseluruhan = []
         for _, row in df.iterrows():
             posisi_urutan = urutan_map[row['cluster']]  # 0 = Omzet Tertinggi, n_cluster-1 = Terendah
 
-            rasio_posisi = posisi_urutan / (n_cluster - 1) if n_cluster > 1 else 0.0
-
-            # Klasifikasi Tingkatan Status Dinamis Sesuai Posisi Rasio
-            if rasio_posisi == 0.0:
-                status = 'Sangat Tinggi (Ramai)'
-                rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
-            elif rasio_posisi <= 0.35:
-                status = 'Tinggi'
-                rekomendasi = 'Tingkatkan kuota penjualan dan berikan diskon khusus bundling'
-            elif rasio_posisi <= 0.70:
-                status = 'Sedang'
-                rekomendasi = 'Tingkatkan kunjungan BC dan optimalkan penataan produk'
+            if n_cluster == 2:
+                if posisi_urutan == 0:
+                    status = 'Tinggi (Ramai)'
+                    rekomendasi = 'Pertahankan stok produk terlaris dan loyalitas outlet unggulan'
+                else:
+                    status = 'Rendah (Sepi)'
+                    rekomendasi = 'Tingkatkan promosi, evaluasi produk dan lakukan kunjungan berkala'
+            elif n_cluster == 3:
+                if posisi_urutan == 0:
+                    status = 'Tinggi (Ramai)'
+                    rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
+                elif posisi_urutan == 1:
+                    status = 'Sedang'
+                    rekomendasi = 'Tingkatkan kunjungan BC dan optimalkan penataan produk'
+                else:
+                    status = 'Rendah (Sepi)'
+                    rekomendasi = 'Evaluasi produk, cek daya beli wilayah, atau berikan event promosi khusus'
+            elif n_cluster == 4:
+                if posisi_urutan == 0:
+                    status = 'Sangat Tinggi (Ramai)'
+                    rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
+                elif posisi_urutan == 1:
+                    status = 'Tinggi'
+                    rekomendasi = 'Tingkatkan kuota penjualan dan berikan diskon khusus bundling'
+                elif posisi_urutan == 2:
+                    status = 'Sedang'
+                    rekomendasi = 'Tingkatkan kunjungan BC dan optimalkan penataan produk'
+                else:
+                    status = 'Rendah (Sepi)'
+                    rekomendasi = 'Evaluasi produk, cek daya beli wilayah, atau berikan event promosi khusus'
             else:
-                status = 'Rendah (Sepi)'
-                rekomendasi = 'Evaluasi produk, cek daya beli wilayah, atau berikan event promosi khusus'
+                if posisi_urutan == 0:
+                    status = 'Sangat Tinggi (Ramai)'
+                    rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
+                elif posisi_urutan == 1:
+                    status = 'Tinggi'
+                    rekomendasi = 'Tingkatkan kuota penjualan dan berikan diskon khusus bundling'
+                elif posisi_urutan == 2:
+                    status = 'Sedang'
+                    rekomendasi = 'Tingkatkan kunjungan BC dan optimalkan penataan produk'
+                elif posisi_urutan == 3:
+                    status = 'Rendah'
+                    rekomendasi = 'Evaluasi minat pasar dan tingkatkan program diskon promosi'
+                else:
+                    status = 'Sangat Rendah (Sepi)'
+                    rekomendasi = 'Evaluasi menyeluruh penjualan outlet dan minat beli wilayah'
 
             hasil_keseluruhan.append({
                 'id_outlet': int(row['id_outlet']),
-                'cluster': int(row['cluster']),
+                'cluster': int(posisi_urutan + 1),
                 'status': status,
                 'rekomendasi_promosi': rekomendasi
             })
