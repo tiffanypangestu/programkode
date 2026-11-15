@@ -218,7 +218,7 @@ class DashboardController extends Controller
                 $cluster = 'Cluster 2 (Sedang)';
                 $clusterCode = 'C2';
                 $status = 'Sedang';
-                $rekomendasi = 'Tingkatkan frekuensi promosi & diversifikasi paket produk';
+                $rekomendasi = 'Tingkatkan frekuensi promosi & variasi paket produk';
             } else {
                 $cluster = 'Cluster 3 (Sepi)';
                 $clusterCode = 'C3';

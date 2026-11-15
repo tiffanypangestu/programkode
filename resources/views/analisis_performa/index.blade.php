@@ -7,23 +7,9 @@
         {{-- Header & Form Jalankan Analisis --}}
         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span
-                        class="inline-flex items-center rounded-md bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
-                        K-Means Clustering
-                    </span>
-                    <span
-                        class="inline-flex items-center rounded-md bg-emerald-50 border border-emerald-200 px-2 py-0.5 text-xs font-semibold text-emerald-800">
-                        Transaksi BC, SPG & Supervisor
-                    </span>
-                    <span class="text-xs text-gray-500">5 Indikator Variabel</span>
-                </div>
                 <h1 class="mt-1 text-2xl font-bold tracking-tight text-gray-900 sm:text-3xl">
                     Analisis Performa Outlet
                 </h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Pengelompokan performa outlet berdasarkan transaksi penjualan milik Beauty Consultant (BC), Sales Promotion Girl (SPG), dan Supervisor.
-                </p>
             </div>
 
             {{-- Form Periode & Button --}}
@@ -125,10 +111,7 @@
             <div class="border-b border-gray-100 px-6 py-5">
                 <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                        <h2 class="text-base font-semibold text-gray-900">Riwayat Analisis Performa Outlet</h2>
-                        <p class="text-xs text-gray-500">
-                            Daftar hasil pengelompokan K-Means berdasarkan periode data penjualan
-                        </p>
+                        <h2 class="text-base font-semibold text-gray-900">Histori Analisis</h2>
                     </div>
                     @if (count($riwayatAnalisis) > 0)
                         <span

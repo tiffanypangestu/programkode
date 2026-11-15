@@ -137,7 +137,8 @@
         {{-- Group Manajemen SDM: Karyawan, BC, SPG --}}
         @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
             <div>
-                <p class="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Manajemen Karyawan</p>
+                <p class="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Manajemen Karyawan
+                </p>
                 <div class="space-y-1">
                     <a href="{{ route('karyawan.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('karyawan*') ? 'bg-indigo-600 text-white shadow-md shadow-indigo-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
@@ -193,7 +194,7 @@
         @endif
 
         {{-- Group Transaksi --}}
-        @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin']))
+        @if (in_array(auth()->user()->role->nama_role ?? auth()->user()->role, ['Admin', 'admin', 'Supervisor']))
             <div>
                 <p class="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-400">Transaksi</p>
                 <div class="space-y-1">

@@ -15,6 +15,7 @@
             {{-- Filter Periode & Cetak Laporan --}}
             <div class="flex flex-wrap items-center gap-3">
                 <form action="{{ route('dashboard') }}" method="GET" class="flex items-center gap-2">
+
                     <label for="periode-select" class="text-xs font-semibold uppercase tracking-wider text-gray-500">
                         Periode:
                     </label>

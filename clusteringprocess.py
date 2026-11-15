@@ -5,38 +5,24 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 from typing import List, Dict, Any
 
-def metode_elbow(wcss_list: list) -> int:
-    """
-    PEMBUKTIAN K OPTIMAL (METODE ELBOW):
-    Menghitung K Optimal secara adaptif berdasarkan rasio penurunan WCSS (Inertia).
-    Titik siku (elbow point) adalah titik di mana penurunan WCSS melambat secara drastis
-    (rasio penurunan drop_{k-1} terhadap drop_k bernilai maksimal).
-    Jika pola data optimal pada 3 cluster maka menghasilkan 3, jika 4 maka 4.
-    """
+def metode_elbow(wcss_list: list, threshold: float = 0.15) -> int:
     titik_n = len(wcss_list)
-    if titik_n < 3:
-        return max(2, titik_n)
+    if titik_n < 2:
+        return 1
 
-    drops = []
     for i in range(titik_n - 1):
-        prev_w = float(wcss_list[i])
-        next_w = float(wcss_list[i + 1])
-        drops.append(max(0.0001, prev_w - next_w))
+        wcss_sebelum = float(wcss_list[i])
+        wcss_sesudah = float(wcss_list[i + 1])
 
-    ratios = []
-    for i in range(len(drops) - 1):
-        prev_drop = drops[i]
-        next_drop = drops[i + 1]
-        r = prev_drop / next_drop if next_drop > 0 else 1.0
-        ratios.append(r)
+        # Rumus Rasio Persentase Penurunan WCSS
+        penurunan = (wcss_sebelum - wcss_sesudah) / wcss_sebelum if wcss_sebelum > 0 else 0.0
 
-    if not ratios:
-        return 3
+        # Titik Elbow Terbukti: Penurunan sudah melandai (< 15%)
+        if penurunan < threshold:
+            k_optimal = i + 1
+            return max(2, k_optimal)
 
-    best_idx = int(np.argmax(ratios))
-    k_optimal = best_idx + 2  # index 0 -> k=2, index 1 -> k=3, index 2 -> k=4
-
-    return max(2, min(k_optimal, titik_n - 1))
+    return max(2, titik_n - 1)
 
 
 def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
@@ -66,15 +52,15 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
         if df.empty:
             return {"wcss": {}, "k_optimal": 0, "silhouette_score": 0.0, "data": []}
 
-        # 2. Ambil 5 Indikator Fitur Operasional
-        variabel = ['omzet', 'frekuensi', 'growth', 'kontribusi', 'jumlah_produk']
+        # 2. Ambil 5 Indikator Variabel
+        variabel = ['omzet', 'frekuensi', 'kontribusi', 'growth', 'jumlah_produk']
         x = df[variabel]
 
-        # 3. Normalisasi Data dengan MinMaxScaler (Skala 0 - 1)
+        # 3. MinMax Scaler
         scaler = MinMaxScaler()
         x_scaled = scaler.fit_transform(x)
 
-        # 4. Hitung WCSS (Inertia) dari K=1 hingga K_max (Sesuai Jumlah Data)
+        # 4. Hitung WCSS (Inertia) 
         wcss = []
         k_max = min(len(df), 5)
         for k in range(1, k_max + 1):
@@ -82,10 +68,10 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
             kmeans_temp.fit(x_scaled)
             wcss.append(float(kmeans_temp.inertia_))
 
-        # 5. Pembuktian K Optimal via Metode Elbow Kuantitatif
+        # 5. Pembuktian K Optimal via Metode Elbow 
         n_cluster = metode_elbow(wcss)
 
-        # 6. Eksekusi K-Means Menggunakan K Hasil Pembuktian
+        # 6. Eksekusi K-Means 
         kmeans = KMeans(n_clusters=n_cluster, random_state=42, n_init=10)
         cluster_labels = kmeans.fit_predict(x_scaled)
 
@@ -103,10 +89,10 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
         cluster_omzet_mean = df.groupby('cluster')['omzet'].mean().sort_values(ascending=False)
         urutan_map = {cluster_id: idx for idx, cluster_id in enumerate(cluster_omzet_mean.index)}
 
-        # 9. Pemetaan Status & Rekomendasi Sesuai Jumlah Cluster (k_optimal Metode Elbow)
+        # 9. Pemetaan Status & Rekomendasi 
         hasil_keseluruhan = []
         for _, row in df.iterrows():
-            posisi_urutan = urutan_map[row['cluster']]  # 0 = Omzet Tertinggi, n_cluster-1 = Terendah
+            posisi_urutan = urutan_map[row['cluster']]  
 
             if n_cluster == 2:
                 if posisi_urutan == 0:

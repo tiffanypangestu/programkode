@@ -137,7 +137,7 @@ class AnalisisPerformaController extends Controller
             session()->flash('error', 'Gagal terhubung ke FastAPI (port 8001). Pastikan server FastAPI sudah aktif dijalankan.');
         }
 
-        if (!$hasil_clustering) {
+        if (! $hasil_clustering) {
             $analisisDb = DB::table('analisis_performa')->where('periode_analisis', $periode_analisis)->first();
             if ($analisisDb) {
                 $hasil_clustering = [
@@ -146,7 +146,7 @@ class AnalisisPerformaController extends Controller
                         'silhouette_score' => $analisisDb->silhouette_score ?? null,
                         'wcss' => [],
                         'data' => [],
-                    ]
+                    ],
                 ];
             }
         }
@@ -210,7 +210,7 @@ class AnalisisPerformaController extends Controller
         $tahun_lalu = $periode_lalu->format('Y');
         $tahun_sekarang = Carbon::parse($periode_analisis)->format('Y');
 
-        // Query penjualan bulan ini khusus milik BC, SPG, dan Supervisor
+        // Query penjualan: BC, SPG, dan Supervisor
         $penjualanBulanIni = (clone $this->basePenjualanQuery())
             ->whereMonth('penjualan.tanggal_penjualan', $bulan_sekarang)
             ->whereYear('penjualan.tanggal_penjualan', $tahun_sekarang);
