@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        {{-- Tabel SPG --}}
+        {{-- Tabel BC --}}
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
 
             <div class="border-b border-gray-100 px-6 py-5">
@@ -59,9 +59,11 @@
 
             @if ($bc->isEmpty())
                 <div class="px-6 py-16 text-center">
-                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
+                    <div
+                        class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600">
                         <svg class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                     </div>
                     <h3 class="mt-4 font-semibold text-gray-900">

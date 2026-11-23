@@ -9,10 +9,6 @@
                 &larr; Kembali ke Transaksi
             </a>
             <h1 class="mt-3 text-2xl font-bold tracking-tight text-gray-900">Import Penjualan Historis</h1>
-            <p class="mt-2 text-sm text-gray-600">
-                Unggah file Excel untuk memasukkan transaksi penjualan dan detail produk ke dalam sistem. Data diproses per
-                batch 100 data via AJAX tanpa reload halaman.
-            </p>
         </div>
 
         {{-- Alert sukses session (fallback) --}}
@@ -92,8 +88,10 @@
                     {{-- Duplicates detail box --}}
                     <div id="resDuplicatesBox" class="mt-4 hidden rounded-xl border border-amber-200 bg-amber-50/70 p-4">
                         <h4 class="text-xs font-semibold text-amber-900 flex items-center gap-1.5">
-                            <svg class="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            <svg class="h-4 w-4 text-amber-600 shrink-0" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                             </svg>
                             <span><span id="resDupCountText">0</span> Nomor Transaksi Duplikat Dilewati:</span>
                         </h4>
@@ -131,7 +129,8 @@
         {{-- Error AJAX Box --}}
         <div id="ajaxErrorBox" class="mb-5 hidden rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
             <p id="ajaxErrorTitle" class="mb-2 font-semibold flex items-center gap-2">
-                <svg class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                <svg class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                    stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round"
                         d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
                 </svg>
@@ -212,10 +211,6 @@
                         <code class="rounded bg-gray-200 px-1 py-0.5 text-xs">
                             tanggal, nomor_transaksi, kode_outlet, nama_produk, jumlah, harga_satuan
                         </code>
-                    </p>
-                    <p class="mt-2 text-xs leading-5 text-gray-500">
-                        Beberapa baris dengan nomor transaksi yang sama akan digabung menjadi satu transaksi.
-                        Nomor transaksi yang sudah ada di database akan otomatis dilewati (skip).
                     </p>
                 </div>
 
@@ -334,8 +329,10 @@
                 {{-- Error preview file --}}
                 <div id="previewError" class="hidden rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     <p class="font-semibold mb-1 flex items-center gap-1.5">
-                        <svg class="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        <svg class="h-4 w-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                         </svg>
                         <span>File tidak dapat dibaca</span>
                     </p>

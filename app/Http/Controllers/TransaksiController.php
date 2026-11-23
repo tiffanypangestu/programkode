@@ -8,6 +8,7 @@ use App\Models\Transaksi;
 use App\Models\Wilayah;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class TransaksiController extends Controller
 {
@@ -16,7 +17,30 @@ class TransaksiController extends Controller
      */
     public function index(Request $request)
     {
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawan = $user->karyawan;
+
         $query = Transaksi::with(['wilayah', 'outlet', 'karyawan']);
+
+        // 1. SPG: Hanya bisa mengakses data transaksi dalam 1 outlet tempat bertugas
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $outletId = $karyawan?->outlets()->value('outlet.outlet_id');
+            if ($outletId) {
+                $query->where('outlet_id', $outletId);
+            } elseif ($karyawan) {
+                $query->where('karyawan_id', $karyawan->karyawan_id);
+            }
+        }
+        // 2. BC: Hanya bisa mengakses data transaksi dalam 1 wilayah cakupannya
+        elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            if ($karyawan && $karyawan->outlets()->exists()) {
+                $query->whereIn('outlet_id', $karyawan->outlets()->pluck('outlet.outlet_id'));
+            } elseif ($karyawan) {
+                $query->where('karyawan_id', $karyawan->karyawan_id);
+            }
+        }
+        // 3. Supervisor & Admin: Melihat transaksi di seluruh wilayah
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -78,6 +102,22 @@ class TransaksiController extends Controller
      */
     public function show(Transaksi $transaksi)
     {
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawan = $user->karyawan;
+
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgOutletId = $karyawan?->outlets()->value('outlet.outlet_id');
+            if ($spgOutletId && (int) $transaksi->outlet_id !== (int) $spgOutletId) {
+                abort(403, 'Anda hanya dapat mengakses transaksi pada outlet penugasan Anda!');
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcWilayahId = $user->wilayah_id ?? $karyawan?->outlets()->value('outlet.wilayah_id');
+            if ($bcWilayahId && (int) $transaksi->wilayah_id !== (int) $bcWilayahId) {
+                abort(403, 'Anda hanya dapat mengakses transaksi dalam wilayah penugasan Anda!');
+            }
+        }
+
         $transaksi->load(['wilayah', 'outlet', 'karyawan', 'transaksiDetail', 'pembayaran']);
 
         return view('transaksi.show', compact('transaksi'));
@@ -88,6 +128,21 @@ class TransaksiController extends Controller
      */
     public function edit(Transaksi $transaksi)
     {
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawan = $user->karyawan;
+
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgOutletId = $karyawan?->outlets()->value('outlet.outlet_id');
+            if ($spgOutletId && (int) $transaksi->outlet_id !== (int) $spgOutletId) {
+                abort(403, 'Anda hanya dapat mengubah transaksi pada outlet penugasan Anda!');
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcWilayahId = $user->wilayah_id ?? $karyawan?->outlets()->value('outlet.wilayah_id');
+            if ($bcWilayahId && (int) $transaksi->wilayah_id !== (int) $bcWilayahId) {
+                abort(403, 'Anda hanya dapat mengubah transaksi dalam wilayah penugasan Anda!');
+            }
+        }
         $wilayah = Wilayah::orderBy('nama_wilayah')->get();
         $outlet = Outlet::orderBy('nama_outlet')->get();
         $karyawan = Karyawan::orderBy('nama_karyawan')->get();

@@ -10,7 +10,15 @@ class Penjualan extends Model
 
     protected $primaryKey = 'penjualan_id';
 
-    protected $fillable = ['outlet_id', 'karyawan_id', 'tanggal_penjualan', 'total_harga', 'status_penjualan'];
+    protected $fillable = [
+        'outlet_id',
+        'karyawan_id',
+        'bc_karyawan_id',
+        'spg_karyawan_id',
+        'tanggal_penjualan',
+        'total_harga',
+        'status_penjualan',
+    ];
 
     protected function casts(): array
     {
@@ -28,6 +36,16 @@ class Penjualan extends Model
     public function karyawan()
     {
         return $this->belongsTo(Karyawan::class, 'karyawan_id', 'karyawan_id');
+    }
+
+    public function bcKaryawan()
+    {
+        return $this->belongsTo(Karyawan::class, 'bc_karyawan_id', 'karyawan_id');
+    }
+
+    public function spgKaryawan()
+    {
+        return $this->belongsTo(Karyawan::class, 'spg_karyawan_id', 'karyawan_id');
     }
 
     public function transaksiDetail()

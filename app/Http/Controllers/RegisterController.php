@@ -51,15 +51,21 @@ class RegisterController extends Controller
                 Rule::requiredIf(fn () => in_array($request->jabatan, ['Sales Promotion Girl', 'SPG', '4'])),
                 'exists:outlet,outlet_id',
             ],
-            'wilayah_id' => [
+            'outlet_ids' => [
                 'nullable',
                 Rule::requiredIf(fn () => in_array($request->jabatan, ['Beauty Consultant', 'BC', '3'])),
-                'exists:wilayah,wilayah_id',
+                'array',
+                'min:1',
+            ],
+            'outlet_ids.*' => [
+                'integer',
+                'exists:outlet,outlet_id',
             ],
             'password' => ['required', 'string', 'min:8', 'max:12', 'confirmed'],
         ], [
             'outlet_id.required' => 'Untuk pendaftaran SPG, wajib memilih Outlet tempat bertugas.',
-            'wilayah_id.required' => 'Untuk pendaftaran Beauty Consultant (BC), wajib memilih Wilayah penugasan (Dalam Kota, Luar Kota, atau Luar Pulau).',
+            'outlet_ids.required' => 'Untuk pendaftaran Beauty Consultant (BC), wajib memilih minimal 1 outlet tempat bertugas.',
+            'outlet_ids.min' => 'Untuk pendaftaran Beauty Consultant (BC), wajib memilih minimal 1 outlet tempat bertugas.',
         ]);
 
         $user_new = null;
@@ -105,20 +111,16 @@ class RegisterController extends Controller
                     $karyawan->outlets()->sync([$validated['outlet_id']]);
                 }
             } elseif (in_array($nama_role, ['Beauty Consultant', 'BC'])) {
-                $wilayahModel = ! empty($validated['wilayah_id']) ? Wilayah::find($validated['wilayah_id']) : null;
-                $namaWilayah = $wilayahModel?->nama_wilayah;
-
                 if (method_exists($user_new, 'bc')) {
                     $user_new->bc()->create([
                         'nama_bc' => $validated['nama_lengkap'],
                         'tanggal_masuk' => date('Y-m-d'),
-                        'alamat' => $namaWilayah ? 'Wilayah: ' . $namaWilayah : null,
+                        'alamat' => null,
                     ]);
                 }
-                // Hubungkan BC ke seluruh outlet di wilayah yang dipilih
-                if (! empty($validated['wilayah_id'])) {
-                    $outletIds = Outlet::where('wilayah_id', $validated['wilayah_id'])->pluck('outlet_id')->all();
-                    $karyawan->outlets()->sync($outletIds);
+                // Hubungkan BC ke outlet-outlet tempat bertugas yang dipilih (bisa 1, 2, 3 atau lebih)
+                if (! empty($validated['outlet_ids'])) {
+                    $karyawan->outlets()->sync($validated['outlet_ids']);
                 }
             }
         });

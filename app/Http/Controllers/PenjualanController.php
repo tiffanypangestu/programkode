@@ -7,7 +7,6 @@ use App\Models\Karyawan;
 use App\Models\Outlet;
 use App\Models\Penjualan;
 use App\Models\Produk;
-use App\Models\StokOutlet;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -122,46 +121,77 @@ class PenjualanController extends Controller
         // $sort = in_array(strtolower($)
 
         $user = Auth::user();
-        $query = Penjualan::with(['outlet', 'karyawan']);
+        $query = Penjualan::with(['outlet', 'karyawan', 'bcKaryawan.user', 'spgKaryawan.user']);
 
-        $namaRole = $user->role?->nama_role ?? '';
+        $namaRole = strtolower($user->role?->nama_role ?? '');
         $karyawan = $user->karyawan;
 
-        if (in_array($namaRole, ['Sales Promotion Girl', 'SPG'])) {
-            if ($karyawan) {
-                $query->where('karyawan_id', $karyawan->karyawan_id);
-            }
-        } elseif ($namaRole === 'Supervisor') {
-            if ($user->wilayah_id ?? null) {
-                $query->whereHas('outlet', function ($q) use ($user) {
-                    $q->where('wilayah_id', $user->wilayah_id);
+        // Pembatasan akses: SPG hanya bisa akses data penjualan outlet penugasan / transaksinya
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $outletId = $karyawan?->outlets()->value('outlet.outlet_id');
+            if ($outletId) {
+                $query->where(function ($q) use ($outletId, $karyawan) {
+                    $q->where('penjualan.outlet_id', $outletId)
+                        ->orWhere('penjualan.spg_karyawan_id', $karyawan->karyawan_id)
+                        ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                });
+
+                $spgModel = DB::table('spg')->where('user_id', $user->user_id)->first();
+                $tanggalMasuk = $spgModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                if ($tanggalMasuk) {
+                    $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                }
+            } elseif ($karyawan) {
+                $query->where(function ($q) use ($karyawan) {
+                    $q->where('penjualan.spg_karyawan_id', $karyawan->karyawan_id)
+                        ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
                 });
             }
-        } elseif (in_array($namaRole, ['Beauty Consultant', 'BC'])) {
+        }
+        // 2. BC: Bisa ngeliat data hanya outlet bertugas / transaksinya
+        elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
             if ($karyawan && $karyawan->outlets()->exists()) {
-                $query->whereIn('outlet_id', $karyawan->outlets()->pluck('outlet.outlet_id'));
+                $outletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->all();
+                $query->where(function ($q) use ($outletIds, $karyawan) {
+                    $q->whereIn('penjualan.outlet_id', $outletIds)
+                        ->orWhere('penjualan.bc_karyawan_id', $karyawan->karyawan_id)
+                        ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                });
+
+                $bcModel = DB::table('bc')->where('user_id', $user->user_id)->first();
+                $tanggalMasuk = $bcModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                if ($tanggalMasuk) {
+                    $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                }
             } elseif ($karyawan) {
-                $query->where('karyawan_id', $karyawan->karyawan_id);
+                $query->where(function ($q) use ($karyawan) {
+                    $q->where('penjualan.bc_karyawan_id', $karyawan->karyawan_id)
+                        ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                });
+            } else {
+                $query->whereRaw('1 = 0');
             }
         }
-
-        // Filter Periode (Bulan dan Tahun) menggunakan Flatpickr
-        // Default adalah bulan saat ini (Y-m), kecuali jika user memilih menampilkan semua
-        $tampilkanSemua = $request->has('semua');
+        // 3. Supervisor: Hanya bisa mengakses data transaksi outlet nya sendiri.
+        elseif ($namaRole === 'supervisor') {
+            if ($karyawan) {
+                $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
+            } else {
+                $query->whereRaw('1 = 0');
+            }
+        }
+        // 4. Admin: Akses penuh ke seluruh data faktur/penjualan
         $periode = $request->input('periode');
+        $tampilkanSemua = $request->has('semua') || empty($periode);
 
-        if (! $tampilkanSemua) {
-            if (! $periode) {
-                $periode = date('Y-m'); // Default bulan ini, misal '2026-11'
-            }
-
-            if (preg_match('/^\d{4}-\d{2}$/', $periode)) {
-                [$tahun, $bulan] = explode('-', $periode);
-                $query->whereYear('tanggal_penjualan', (int) $tahun)
-                      ->whereMonth('tanggal_penjualan', (int) $bulan);
-            }
+        if (! empty($periode) && preg_match('/^\d{4}-\d{2}$/', $periode)) {
+            [$tahun, $bulan] = explode('-', $periode);
+            $query->whereYear('tanggal_penjualan', (int) $tahun)
+                ->whereMonth('tanggal_penjualan', (int) $bulan);
+            $tampilkanSemua = false;
         } else {
             $periode = '';
+            $tampilkanSemua = true;
         }
 
         // Ringkasan omzet dan jumlah transaksi pada filter yang aktif
@@ -169,9 +199,9 @@ class PenjualanController extends Controller
         $totalTransaksi = (clone $query)->count();
 
         $penjualan = $query->latest('tanggal_penjualan')
-                           ->latest('penjualan_id')
-                           ->paginate(10)
-                           ->appends($request->query());
+            ->latest('penjualan_id')
+            ->paginate(10)
+            ->appends($request->query());
 
         // Ambil rincian produk melalui nomor_transaksi di tabel transaksi
         $nomorTransaksis = $penjualan->getCollection()->map(function ($item) {
@@ -193,6 +223,8 @@ class PenjualanController extends Controller
 
             return $item;
         });
+
+        // hak akses data: SPG dan BC
 
         return view('penjualan.index', compact(
             'penjualan',
@@ -230,11 +262,9 @@ class PenjualanController extends Controller
             $outlet = Outlet::with('wilayah')->orderBy('nama_outlet')->get();
             $outletTugasKhusus = false;
         } else {
-            // Ambil outlet yang ditugaskan ke karyawan login
+            // Ambil outlet yang ditugaskan ke karyawan
             $outlet = $karyawanLogin->outlets()->with('wilayah')->orderBy('nama_outlet')->get();
             $outletTugasKhusus = $outlet->isNotEmpty();
-
-            // Jika belum ada penugasan khusus, tampilkan semua outlet aktif
             if ($outlet->isEmpty()) {
                 $outlet = Outlet::with('wilayah')->orderBy('nama_outlet')->get();
             }
@@ -247,7 +277,21 @@ class PenjualanController extends Controller
                 return $item->produk_id.'-'.$item->wilayah_id;
             })->values();
 
-        $karyawan = Karyawan::orderBy('nama_karyawan')->get();
+        $karyawan = Karyawan::with('user')->orderBy('nama_karyawan')->get();
+
+        $bcList = Karyawan::whereHas('role', function ($q) {
+            $q->whereIn('nama_role', ['Beauty Consultant', 'BC']);
+        })->orWhereIn('jabatan', ['Beauty Consultant', 'BC'])
+            ->with('user')
+            ->orderBy('nama_karyawan')
+            ->get();
+
+        $spgList = Karyawan::whereHas('role', function ($q) {
+            $q->whereIn('nama_role', ['Sales Promotion Girl', 'SPG']);
+        })->orWhereIn('jabatan', ['Sales Promotion Girl', 'SPG'])
+            ->with('user')
+            ->orderBy('nama_karyawan')
+            ->get();
 
         // Tentukan outlet yang terpilih secara default
         $defaultOutletId = old('outlet_id');
@@ -261,7 +305,7 @@ class PenjualanController extends Controller
 
         $initialStok = $defaultOutletId ? $this->getOutletStockCalculation((int) $defaultOutletId) : [];
 
-        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin', 'initialStok', 'defaultOutletId', 'namaRole'));
+        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'bcList', 'spgList', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin', 'initialStok', 'defaultOutletId', 'namaRole'));
     }
 
     public function store(Request $request)
@@ -273,6 +317,9 @@ class PenjualanController extends Controller
 
         $validated = $request->validate([
             'outlet_id' => ['required', 'integer', 'exists:outlet,outlet_id'],
+            'karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
+            'bc_karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
+            'spg_karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
             'tanggal_penjualan' => ['required', 'date'],
             'produk_id' => ['required', 'array', 'min:1'],
             'produk_id.*' => ['required', 'integer', 'exists:produk,produk_id'],
@@ -281,24 +328,29 @@ class PenjualanController extends Controller
             'status_penjualan' => ['nullable', 'string', 'max:30'],
         ]);
 
-        // 0. Validasi Ketersediaan Sisa Stok Outlet
-        $stokData = $this->getOutletStockCalculation((int) $validated['outlet_id']);
+        // 0. Validasi Ketersediaan Sisa Stok Outlet (Khusus untuk SPG, BC, Supervisor - Admin tidak dibatasi stok)
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
 
-        $totalMintaPerProduk = [];
-        foreach ($validated['produk_id'] as $index => $produkId) {
-            $qty = (int) $validated['jumlah'][$index];
-            $totalMintaPerProduk[$produkId] = ($totalMintaPerProduk[$produkId] ?? 0) + $qty;
-        }
+        if (! in_array($namaRole, ['admin'])) {
+            $stokData = $this->getOutletStockCalculation((int) $validated['outlet_id']);
 
-        foreach ($totalMintaPerProduk as $produkId => $totalMinta) {
-            $stokItem = $stokData[$produkId] ?? null;
-            $sisaStok = $stokItem['sisa_stok'] ?? 0;
-            $namaProduk = $stokItem['nama_produk'] ?? "Produk ID {$produkId}";
+            $totalMintaPerProduk = [];
+            foreach ($validated['produk_id'] as $index => $produkId) {
+                $qty = (int) $validated['jumlah'][$index];
+                $totalMintaPerProduk[$produkId] = ($totalMintaPerProduk[$produkId] ?? 0) + $qty;
+            }
 
-            if ($totalMinta > $sisaStok) {
-                return back()->withInput()->withErrors([
-                    'jumlah' => "Kuantitas untuk produk \"{$namaProduk}\" ({$totalMinta} pcs) melebihi sisa stok yang tersedia di outlet ini (Tersedia: {$sisaStok} pcs).",
-                ]);
+            foreach ($totalMintaPerProduk as $produkId => $totalMinta) {
+                $stokItem = $stokData[$produkId] ?? null;
+                $sisaStok = $stokItem['sisa_stok'] ?? 0;
+                $namaProduk = $stokItem['nama_produk'] ?? "Produk ID {$produkId}";
+
+                if ($totalMinta > $sisaStok) {
+                    return back()->withInput()->withErrors([
+                        'jumlah' => "Kuantitas untuk produk \"{$namaProduk}\" ({$totalMinta} pcs) melebihi sisa stok yang tersedia di outlet ini (Tersedia: {$sisaStok} pcs).",
+                    ]);
+                }
             }
         }
 
@@ -361,31 +413,55 @@ class PenjualanController extends Controller
             ];
         }
 
-        // 2. Buat otomatis data login
+        // 2. Tentukan Petugas Karyawan (Maksimal 2: 1 BC dan 1 SPG, terhubung ke akun email)
         $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawanLogin = $user->karyawan;
 
-        $karyawan = Karyawan::firstOrCreate(
-            ['user_id' => $user->user_id],
-            [
-                'role_id' => $user->role_id,
-                'nama_karyawan' => $user->nama_lengkap ?? $user->name,
-                'jabatan' => $user->role?->nama_role ?? 'Sales Promotion Girl',
-                'nomor_telepon' => $user->nomor_telepon,
-                'tahun_masuk' => (int) date('Y'),
-            ]
-        );
+        $bcId = $request->filled('bc_karyawan_id') ? (int) $request->input('bc_karyawan_id') : null;
+        $spgId = $request->filled('spg_karyawan_id') ? (int) $request->input('spg_karyawan_id') : null;
 
-        // Selalu hubungkan outlet ke karyawan jika belum ada penugasan
-        if ($karyawan->outlets()->count() === 0) {
-            $karyawan->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
+        if (in_array($namaRole, ['admin', 'supervisor'])) {
+            if (! $bcId && ! $spgId && ! $request->filled('karyawan_id')) {
+                return back()->withInput()->withErrors([
+                    'petugas' => 'Silakan pilih minimal 1 petugas karyawan (1 BC dan/atau 1 SPG).',
+                ]);
+            }
+            if (! $bcId && ! $spgId && $request->filled('karyawan_id')) {
+                $karyawanTemp = Karyawan::find($request->input('karyawan_id'));
+                if ($karyawanTemp) {
+                    $roleTemp = strtolower($karyawanTemp->role?->nama_role ?? $karyawanTemp->jabatan ?? '');
+                    if (str_contains($roleTemp, 'beauty') || str_contains($roleTemp, 'bc')) {
+                        $bcId = $karyawanTemp->karyawan_id;
+                    } elseif (str_contains($roleTemp, 'sales') || str_contains($roleTemp, 'spg')) {
+                        $spgId = $karyawanTemp->karyawan_id;
+                    }
+                }
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcId = $karyawanLogin?->karyawan_id;
+        } elseif (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgId = $karyawanLogin?->karyawan_id;
         }
 
-        $karyawanId = $karyawan->karyawan_id;
+        // Hubungkan outlet ke karyawan BC & SPG yang dipilih agar penugasan sinkron
+        if ($bcId) {
+            $bcKaryawan = Karyawan::find($bcId);
+            $bcKaryawan?->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
+        }
+        if ($spgId) {
+            $spgKaryawan = Karyawan::find($spgId);
+            $spgKaryawan?->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
+        }
+
+        $karyawanId = $spgId ?? $bcId ?? $request->input('karyawan_id') ?? $karyawanLogin?->karyawan_id;
 
         // 3. Simpan data penjualan (transaksi_id akan diisi setelah transaksi dibuat)
         $penjualan = Penjualan::create([
             'outlet_id' => $validated['outlet_id'],
             'karyawan_id' => $karyawanId,
+            'bc_karyawan_id' => $bcId,
+            'spg_karyawan_id' => $spgId,
             'tanggal_penjualan' => $validated['tanggal_penjualan'],
             'total_harga' => $total_harga,
             'status_penjualan' => $validated['status_penjualan'] ?? 'selesai',
@@ -414,17 +490,41 @@ class PenjualanController extends Controller
             ]);
         }
 
+        $pesanSukses = in_array($namaRole, ['admin'])
+            ? 'Faktur penjualan berhasil disimpan!'
+            : 'Transaksi penjualan berhasil disimpan!';
+
         return redirect()
             ->route('penjualan.index')
-            ->with('success', 'Data penjualan berhasil disimpan!');
+            ->with('success', $pesanSukses);
     }
 
     public function show(Penjualan $penjualan)
     {
-
         $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
 
-        $penjualan->load(['outlet', 'karyawan']);
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawan = $user->karyawan;
+
+        // Validasi akses per role
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgOutletId = $karyawan?->outlets()->value('outlet.outlet_id');
+            if ($spgOutletId && (int) $penjualan->outlet_id !== (int) $spgOutletId) {
+                abort(403, 'Anda hanya dapat mengakses transaksi pada outlet penugasan Anda!');
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcWilayahId = $user->wilayah_id ?? $karyawan?->outlets()->value('outlet.wilayah_id');
+            if ($bcWilayahId && (int) $penjualan->outlet?->wilayah_id !== (int) $bcWilayahId) {
+                abort(403, 'Anda hanya dapat mengakses transaksi dalam wilayah penugasan Anda!');
+            }
+        } elseif ($namaRole === 'supervisor') {
+            if ($karyawan && (int) $penjualan->karyawan_id !== (int) $karyawan->karyawan_id) {
+                abort(403, 'Anda hanya dapat mengakses transaksi penjualan milik Anda!');
+            }
+        }
+
+        $penjualan->load(['outlet', 'karyawan', 'bcKaryawan.user', 'spgKaryawan.user']);
 
         $transaksiDetails = DB::table('transaksi_detail')
             ->join('transaksi', 'transaksi.transaksi_id', '=', 'transaksi_detail.transaksi_id')
@@ -443,9 +543,44 @@ class PenjualanController extends Controller
             'Beauty Consultant', 'Sales Promotion Girl',
         ]);
 
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawanLogin = $user->karyawan;
+
+        // Validasi hak edit transaksi per role
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgOutletId = $karyawanLogin?->outlets()->value('outlet.outlet_id');
+            if ($spgOutletId && (int) $penjualan->outlet_id !== (int) $spgOutletId) {
+                abort(403, 'Anda hanya dapat mengubah transaksi pada outlet penugasan Anda!');
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcWilayahId = $user->wilayah_id ?? $karyawanLogin?->outlets()->value('outlet.wilayah_id');
+            if ($bcWilayahId && (int) $penjualan->outlet?->wilayah_id !== (int) $bcWilayahId) {
+                abort(403, 'Anda hanya dapat mengubah transaksi dalam wilayah penugasan Anda!');
+            }
+        } elseif ($namaRole === 'supervisor') {
+            if ($karyawanLogin && (int) $penjualan->karyawan_id !== (int) $karyawanLogin->karyawan_id) {
+                abort(403, 'Anda hanya dapat mengubah transaksi penjualan milik Anda!');
+            }
+        }
+
         $outlet = Outlet::orderBy('nama_outlet')->get();
         $produk = Produk::orderBy('nama_produk')->get();
-        $karyawan = Karyawan::orderBy('nama_karyawan')->get();
+        $karyawan = Karyawan::with('user')->orderBy('nama_karyawan')->get();
+
+        $bcList = Karyawan::whereHas('role', function ($q) {
+            $q->whereIn('nama_role', ['Beauty Consultant', 'BC']);
+        })->orWhereIn('jabatan', ['Beauty Consultant', 'BC'])
+            ->with('user')
+            ->orderBy('nama_karyawan')
+            ->get();
+
+        $spgList = Karyawan::whereHas('role', function ($q) {
+            $q->whereIn('nama_role', ['Sales Promotion Girl', 'SPG']);
+        })->orWhereIn('jabatan', ['Sales Promotion Girl', 'SPG'])
+            ->with('user')
+            ->orderBy('nama_karyawan')
+            ->get();
 
         $daftarHarga = DB::table('harga_produk')
             ->orderByDesc('harga_produk_id')
@@ -460,14 +595,19 @@ class PenjualanController extends Controller
 
         $harga_produk = $produk->pluck('harga_produk', 'produk_id')->toJson();
 
+        $namaRole = strtolower(Auth::user()->role?->nama_role ?? '');
+
         return view('penjualan.edit', compact(
             'penjualan',
             'outlet',
             'karyawan',
+            'bcList',
+            'spgList',
             'produk',
             'daftarHarga',
             'transaksiDetails',
-            'harga_produk'
+            'harga_produk',
+            'namaRole'
         ));
     }
 
@@ -482,6 +622,8 @@ class PenjualanController extends Controller
             'outlet_id' => ['required', 'integer', 'exists:outlet,outlet_id'],
             'tanggal_penjualan' => ['required', 'date'],
             'karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
+            'bc_karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
+            'spg_karyawan_id' => ['nullable', 'integer', 'exists:karyawan,karyawan_id'],
             'status_penjualan' => ['nullable', 'string', 'max:30'],
             'produk_id' => ['required', 'array', 'min:1'],
             'produk_id.*' => ['required', 'integer', 'exists:produk,produk_id'],
@@ -561,13 +703,27 @@ class PenjualanController extends Controller
             ];
         }
 
-        DB::transaction(function () use ($penjualan, $validated, $outlet, $total_harga, $items_to_insert) {
-            $karyawanId = $validated['karyawan_id'] ?? $penjualan->karyawan_id;
+        DB::transaction(function () use ($request, $penjualan, $validated, $outlet, $total_harga, $items_to_insert) {
+            $bcId = $request->filled('bc_karyawan_id') ? (int) $request->input('bc_karyawan_id') : $penjualan->bc_karyawan_id;
+            $spgId = $request->filled('spg_karyawan_id') ? (int) $request->input('spg_karyawan_id') : $penjualan->spg_karyawan_id;
+
+            if ($bcId) {
+                $bcKaryawan = Karyawan::find($bcId);
+                $bcKaryawan?->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
+            }
+            if ($spgId) {
+                $spgKaryawan = Karyawan::find($spgId);
+                $spgKaryawan?->outlets()->syncWithoutDetaching([$validated['outlet_id']]);
+            }
+
+            $karyawanId = $spgId ?? $bcId ?? $validated['karyawan_id'] ?? $penjualan->karyawan_id;
 
             // 1. Update Penjualan
             $penjualan->update([
                 'outlet_id' => $validated['outlet_id'],
                 'karyawan_id' => $karyawanId,
+                'bc_karyawan_id' => $bcId,
+                'spg_karyawan_id' => $spgId,
                 'tanggal_penjualan' => $validated['tanggal_penjualan'],
                 'total_harga' => $total_harga,
                 'status_penjualan' => $validated['status_penjualan'] ?? $penjualan->status_penjualan ?? 'selesai',
@@ -620,6 +776,27 @@ class PenjualanController extends Controller
     {
         $this->authorizeRoles(['Admin', 'Supervisor', 'BC', 'SPG']);
 
+        $user = Auth::user();
+        $namaRole = strtolower($user->role?->nama_role ?? '');
+        $karyawanLogin = $user->karyawan;
+
+        // Validasi hak hapus transaksi per role
+        if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+            $spgOutletId = $karyawanLogin?->outlets()->value('outlet.outlet_id');
+            if ($spgOutletId && (int) $penjualan->outlet_id !== (int) $spgOutletId) {
+                abort(403, 'Anda hanya dapat menghapus transaksi pada outlet penugasan Anda!');
+            }
+        } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+            $bcWilayahId = $user->wilayah_id ?? $karyawanLogin?->outlets()->value('outlet.wilayah_id');
+            if ($bcWilayahId && (int) $penjualan->outlet?->wilayah_id !== (int) $bcWilayahId) {
+                abort(403, 'Anda hanya dapat menghapus transaksi dalam wilayah penugasan Anda!');
+            }
+        } elseif ($namaRole === 'supervisor') {
+            if ($karyawanLogin && (int) $penjualan->karyawan_id !== (int) $karyawanLogin->karyawan_id) {
+                abort(403, 'Anda hanya dapat menghapus transaksi penjualan milik Anda!');
+            }
+        }
+
         Transaksi::where('nomor_transaksi', 'TR-'.$penjualan->penjualan_id)->delete();
         $penjualan->delete();
 
@@ -630,7 +807,8 @@ class PenjualanController extends Controller
 
     public function downloadPDF(Penjualan $penjualan)
     {
-        $this->authorizeRoles(['Admin', 'BC', 'Supervisor', 'SPG', 'Beauty Consultant', 'Sales Promotion Girl']);
+        // Faktur penjualan HANYA milik Admin (Supervisor, BC, dan SPG dilarang mengakses)
+        $this->authorizeRoles(['Admin']);
 
         $penjualan->load(['outlet', 'karyawan']);
 

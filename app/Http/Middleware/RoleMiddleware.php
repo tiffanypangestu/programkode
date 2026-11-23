@@ -36,8 +36,8 @@ class RoleMiddleware
             'supervisor' => 'supervisor',
         ];
 
-        $userRole = strtolower($namaRole);
-        $allowedRoles = array_map('strtolower', $roles);
+        $userRole = trim(strtolower($namaRole));
+        $allowedRoles = array_map(fn($r) => trim(strtolower($r)), $roles);
 
         // Cek apakah role user langsung cocok ATAU versi peta/aliasnya cocok dengan role yang diizinkan
         $isAllowed = in_array($userRole, $allowedRoles, true) ||

@@ -52,19 +52,22 @@
                 class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#b18a32] focus:ring-2 focus:ring-[#b18a32]/20">
                 <option value="">Pilih jabatan</option>
 
-                <option value="Admin" {{ old('jabatan') === 'Admin' ? 'selected' : '' }}>
+                {{--  <option value="Admin" {{ old('jabatan') === 'Admin' ? 'selected' : '' }}>
                     Admin
-                </option>
+                </option> --}}
+
 
                 <option value="Supervisor" {{ old('jabatan') === 'Supervisor' ? 'selected' : '' }}>
                     Supervisor
                 </option>
 
-                <option value="Beauty Consultant" {{ in_array(old('jabatan'), ['Beauty Consultant', 'BC']) ? 'selected' : '' }}>
+                <option value="Beauty Consultant"
+                    {{ in_array(old('jabatan'), ['Beauty Consultant', 'BC']) ? 'selected' : '' }}>
                     BC (Beauty Consultant)
                 </option>
 
-                <option value="Sales Promotion Girl" {{ in_array(old('jabatan'), ['Sales Promotion Girl', 'SPG']) ? 'selected' : '' }}>
+                <option value="Sales Promotion Girl"
+                    {{ in_array(old('jabatan'), ['Sales Promotion Girl', 'SPG']) ? 'selected' : '' }}>
                     SPG (Sales Promotion Girl)
                 </option>
             </select>
@@ -96,24 +99,48 @@
             @enderror
         </div>
 
-        {{-- Input Khusus BC: Pilih Wilayah (Dalam Kota / Luar Kota / Luar Pulau) --}}
-        <div id="container-wilayah-bc" class="hidden">
-            <label for="wilayah_id" class="mb-2 block text-sm font-semibold text-gray-700">
-                Pilih Wilayah Penugasan <span class="text-red-600">*</span>
-            </label>
+        {{-- Input Khusus BC: Pilih Outlet Tempat Bertugas (Bisa 1, 2, 3, atau lebih) --}}
+        <div id="container-outlet-bc" class="hidden">
+            <div class="flex items-center justify-between mb-2">
+                <label class="block text-sm font-semibold text-gray-700">
+                    Pilih Outlet Tempat Bertugas <span class="text-red-600">*</span>
+                </label>
+                <span id="bc-selected-counter" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-[#89691d]">
+                    0 outlet dipilih
+                </span>
+            </div>
 
-            <select name="wilayah_id" id="wilayah_id"
-                class="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-[#b18a32] focus:ring-2 focus:ring-[#b18a32]/20">
-                <option value="">-- Pilih Wilayah (Dalam Kota / Luar Kota / Luar Pulau) --</option>
+            <p class="text-xs text-gray-500 mb-2">
+                Khusus Beauty Consultant: Pilih counter/outlet tempat Anda bertugas (bisa pilih 1, 2, 3, atau lebih).
+            </p>
+
+            <div class="max-h-60 overflow-y-auto rounded-xl border border-gray-300 bg-white p-3 space-y-3 shadow-inner">
                 @foreach ($wilayahs ?? [] as $w)
-                    <option value="{{ $w->wilayah_id }}" {{ old('wilayah_id') == $w->wilayah_id ? 'selected' : '' }}>
-                        {{ $w->nama_wilayah }}
-                    </option>
+                    @php
+                        $wOutlets = ($outlets ?? collect())->where('wilayah_id', $w->wilayah_id);
+                    @endphp
+                    @if ($wOutlets->isNotEmpty())
+                        <div>
+                            <div class="text-[11px] font-bold uppercase tracking-wider text-[#89691d] bg-amber-50 px-2.5 py-1 rounded-md mb-1.5 border-l-2 border-[#b18a32]">
+                                {{ $w->nama_wilayah }}
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                @foreach ($wOutlets as $out)
+                                    <label class="flex items-center gap-2 p-2 rounded-lg border border-gray-100 bg-gray-50/50 hover:border-[#b18a32] hover:bg-amber-50/40 cursor-pointer transition text-xs font-medium text-gray-800">
+                                        <input type="checkbox" name="outlet_ids[]" value="{{ $out->outlet_id }}"
+                                            class="bc-checkbox h-4 w-4 rounded border-gray-300 text-[#b18a32] focus:ring-[#b18a32]"
+                                            {{ is_array(old('outlet_ids')) && in_array($out->outlet_id, old('outlet_ids')) ? 'checked' : '' }}
+                                            onchange="updateBcCounter()">
+                                        <span class="truncate">{{ $out->nama_outlet }}</span>
+                                    </label>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
                 @endforeach
-            </select>
-            <p class="mt-1 text-xs text-gray-500">Khusus Beauty Consultant: Pilih wilayah penugasan counter Anda.</p>
+            </div>
 
-            @error('wilayah_id')
+            @error('outlet_ids')
                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>
@@ -156,12 +183,19 @@
     </form>
 
     <script>
+        function updateBcCounter() {
+            const checkedCount = document.querySelectorAll('.bc-checkbox:checked').length;
+            const counterEl = document.getElementById('bc-selected-counter');
+            if (counterEl) {
+                counterEl.textContent = checkedCount + ' outlet dipilih';
+            }
+        }
+
         function sesuaikanFormJabatan() {
             const selectJabatan = document.getElementById('jabatan');
             const containerSpg = document.getElementById('container-outlet-spg');
-            const containerBc = document.getElementById('container-wilayah-bc');
+            const containerBc = document.getElementById('container-outlet-bc');
             const selectOutlet = document.getElementById('outlet_id');
-            const selectWilayah = document.getElementById('wilayah_id');
 
             if (!selectJabatan || !containerSpg || !containerBc) return;
 
@@ -169,26 +203,41 @@
 
             if (val === 'Sales Promotion Girl' || val === 'SPG') {
                 containerSpg.classList.remove('hidden');
-                selectOutlet.required = true;
+                if (selectOutlet) selectOutlet.required = true;
 
                 containerBc.classList.add('hidden');
-                selectWilayah.required = false;
             } else if (val === 'Beauty Consultant' || val === 'BC') {
                 containerBc.classList.remove('hidden');
-                selectWilayah.required = true;
 
                 containerSpg.classList.add('hidden');
-                selectOutlet.required = false;
+                if (selectOutlet) selectOutlet.required = false;
+                updateBcCounter();
             } else {
                 containerSpg.classList.add('hidden');
                 containerBc.classList.add('hidden');
-                selectOutlet.required = false;
-                selectWilayah.required = false;
+                if (selectOutlet) selectOutlet.required = false;
             }
         }
 
+        const formRegister = document.querySelector('form');
+        if (formRegister) {
+            formRegister.addEventListener('submit', function(e) {
+                const selectJabatan = document.getElementById('jabatan');
+                if (selectJabatan && (selectJabatan.value === 'Beauty Consultant' || selectJabatan.value === 'BC')) {
+                    const checkedCount = document.querySelectorAll('.bc-checkbox:checked').length;
+                    if (checkedCount === 0) {
+                        e.preventDefault();
+                        alert('Harap pilih minimal 1 outlet tempat bertugas untuk Beauty Consultant (BC).');
+                    }
+                }
+            });
+        }
+
         document.getElementById('jabatan').addEventListener('change', sesuaikanFormJabatan);
-        document.addEventListener('DOMContentLoaded', sesuaikanFormJabatan);
+        document.addEventListener('DOMContentLoaded', function() {
+            sesuaikanFormJabatan();
+            updateBcCounter();
+        });
     </script>
 
     <p class="mt-6 text-center text-sm text-gray-600">

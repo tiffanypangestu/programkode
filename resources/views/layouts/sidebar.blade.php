@@ -32,30 +32,48 @@
                     </a>
                 @endif
 
-                {{-- Penjualan --}}
-                @if (in_array(auth()->user()->role->nama_role ?? '', [
-                        'Admin',
-                        'Supervisor',
-                        'Beauty Consultant',
-                        'Sales Promotion Girl',
-                    ]))
+                {{-- Menu Penjualan untuk Admin (Input Faktur Penjualan & Data Faktur) --}}
+                @if (in_array(auth()->user()->role->nama_role ?? '', ['Admin', 'admin']))
+                    <a href="{{ route('penjualan.create') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.create') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Input Faktur</span>
+                    </a>
                     <a href="{{ route('penjualan.index') }}"
-                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.*') && !request()->routeIs('penjualan.import*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.index') || request()->routeIs('penjualan.show') || request()->routeIs('penjualan.edit') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                        <span>Data Faktur Penjualan</span>
+                    </a>
+                @endif
+
+                {{-- Menu Penjualan untuk Karyawan (SPG, BC, Supervisor) --}}
+                @if (in_array(auth()->user()->role->nama_role ?? '', ['Supervisor', 'Beauty Consultant', 'Sales Promotion Girl']))
+                    <a href="{{ route('penjualan.create') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.create') || request()->routeIs('penjualan.store') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
                                 d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                         </svg>
-                        <span>Penjualan</span>
+                        <span>Input Transaksi</span>
+                    </a>
+                    <a href="{{ route('penjualan.index') }}"
+                        class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('penjualan.index') || request()->routeIs('penjualan.show') || request()->routeIs('penjualan.edit') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
+                        <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Riwayat Transaksi</span>
                     </a>
                 @endif
 
                 {{-- Analisis --}}
-                @if (in_array(auth()->user()->role->nama_role ?? '', [
-                        'Admin',
-                        'Supervisor',
-                        'Beauty Consultant',
-                        'Sales Promotion Girl',
-                    ]))
+                @if (in_array(strtolower(auth()->user()->role->nama_role ?? ''), ['admin', 'supervisor']))
                     <a href="{{ route('analisis-performa.index') }}"
                         class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 {{ request()->routeIs('analisis-performa*') ? 'bg-green-600 text-white shadow-md shadow-green-100' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900' }}">
                         <svg class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

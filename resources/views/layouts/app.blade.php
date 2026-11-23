@@ -8,6 +8,59 @@
     <title>@yield('title', 'UD Medan')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
+    <style>
+        @media screen {
+            .print-only {
+                display: none !important;
+            }
+        }
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm 12mm 12mm 12mm;
+            }
+            html, body {
+                height: auto !important;
+                min-height: 100% !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+                color: #111827 !important;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .flex.h-screen, .flex.flex-1.flex-col, .h-screen, .overflow-hidden, .overflow-y-auto, .overflow-x-auto, .min-w-0 {
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+                position: static !important;
+            }
+            #sidebar, header, #sidebar-backdrop, .no-print {
+                display: none !important;
+            }
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+            }
+            .print-only {
+                display: block !important;
+            }
+            .break-inside-avoid, .print-card, tr, .signature-block {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+            }
+            thead {
+                display: table-header-group !important;
+            }
+            tfoot {
+                display: table-footer-group !important;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 antialiased">

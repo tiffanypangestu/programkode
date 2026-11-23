@@ -1,18 +1,20 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Penjualan')
+@section('title', in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Edit Faktur Penjualan' : 'Edit Transaksi Penjualan')
 
 @section('content')
     <div class="min-h-screen bg-gray-100 px-4 py-8 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl">
             <a href="{{ route('penjualan.index') }}"
                 class="text-sm font-medium text-gray-500 hover:text-emerald-600 transition">
-                ← Kembali ke Data Penjualan
+                ← Kembali ke {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Data Faktur Penjualan' : 'Riwayat Transaksi' }}
             </a>
 
             <div class="mb-6 mt-4 flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">Edit Faktur Penjualan</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">
+                        {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Edit Faktur Penjualan' : 'Edit Transaksi Penjualan' }}
+                    </h1>
                 </div>
             </div>
 
@@ -32,11 +34,13 @@
                 @csrf
                 @method('PUT')
 
-                {{-- Section Informasi Header Faktur --}}
+                {{-- Section Informasi Header --}}
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">Tanggal Penjualan</label>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Tanggal Faktur' : 'Tanggal Transaksi' }}
+                            </label>
                             <input type="date" name="tanggal_penjualan" id="tanggal_penjualan"
                                 value="{{ old('tanggal_penjualan', $penjualan->tanggal_penjualan ? \Carbon\Carbon::parse($penjualan->tanggal_penjualan)->format('Y-m-d') : '') }}"
                                 required
@@ -54,6 +58,56 @@
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        {{-- Petugas BC --}}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Petugas BC
+                                <span class="text-xs text-gray-400 font-normal">(Maks. 1 BC)</span>
+                            </label>
+                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                <select name="bc_karyawan_id" id="bc_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                    <option value="">-- Tidak Ada / Kosongkan --</option>
+                                    @foreach ($bcList as $bc)
+                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id', $penjualan->bc_karyawan_id) == $bc->karyawan_id)>
+                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <div class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
+                                    <span class="font-bold text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded">BC</span>
+                                    <span class="font-medium truncate">{{ $penjualan->bcKaryawan->nama_karyawan ?? '-' }}</span>
+                                </div>
+                                <input type="hidden" name="bc_karyawan_id" value="{{ $penjualan->bc_karyawan_id }}">
+                            @endif
+                        </div>
+
+                        {{-- Petugas SPG --}}
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                                Petugas SPG
+                                <span class="text-xs text-gray-400 font-normal">(Maks. 1 SPG)</span>
+                            </label>
+                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                <select name="spg_karyawan_id" id="spg_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                    <option value="">-- Tidak Ada / Kosongkan --</option>
+                                    @foreach ($spgList as $spg)
+                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id', $penjualan->spg_karyawan_id) == $spg->karyawan_id)>
+                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <div class="flex items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-sm text-pink-900">
+                                    <span class="font-bold text-xs bg-pink-200 text-pink-800 px-1.5 py-0.5 rounded">SPG</span>
+                                    <span class="font-medium truncate">{{ $penjualan->spgKaryawan->nama_karyawan ?? '-' }}</span>
+                                </div>
+                                <input type="hidden" name="spg_karyawan_id" value="{{ $penjualan->spg_karyawan_id }}">
+                            @endif
                         </div>
                     </div>
                 </div>

@@ -84,7 +84,7 @@ class KaryawanController extends Controller
                 ->orWhere('user_id', $karyawan->user_id);
         })->orderBy('name')->get();
         $outlet            = Outlet::orderBy('nama_outlet')->get();
-        $selectedOutletIds = $karyawan->outlets()->pluck('outlet_id')->toArray();
+        $selectedOutletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->toArray();
 
         return view('karyawan.edit', compact('karyawan', 'role', 'users', 'outlet', 'selectedOutletIds'));
     }

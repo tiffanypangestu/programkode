@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AnalisisPerforma;
+use App\Models\Karyawan;
 use App\Models\Outlet;
 use App\Models\Produk;
 use App\Models\Transaksi;
@@ -43,22 +44,41 @@ class DashboardController extends Controller
             $namaRole = strtolower($user->role?->nama_role ?? '');
             $karyawan = $user->karyawan;
 
+            // 1. SPG: Hanya mengakses data transaksi dalam 1 outlet penugasan
             if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
-                if ($karyawan) {
-                    $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
-                }
-            } elseif ($namaRole === 'supervisor') {
-                if ($user->wilayah_id ?? null) {
-                    $query->join('outlet as out_spv', 'out_spv.outlet_id', '=', 'penjualan.outlet_id')
-                        ->where('out_spv.wilayah_id', $user->wilayah_id);
-                }
-            } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
-                if ($karyawan && $karyawan->outlets()->exists()) {
-                    $outletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->all();
-                    $query->whereIn('penjualan.outlet_id', $outletIds);
+                $outletId = $karyawan?->outlets()->value('outlet.outlet_id');
+                if ($outletId) {
+                    $query->where('penjualan.outlet_id', $outletId);
+
+                    $spgModel = DB::table('spg')->where('user_id', $user->user_id)->first();
+                    $tanggalMasuk = $spgModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                    if ($tanggalMasuk) {
+                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                    }
                 } elseif ($karyawan) {
                     $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
                 }
+            }
+            // 2. BC: Hanya mengakses data transaksi di beberapa outlet tempat bertugas
+            elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+                if ($karyawan && $karyawan->outlets()->exists()) {
+                    $outletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->all();
+                    $query->whereIn('penjualan.outlet_id', $outletIds);
+
+                    $bcModel = DB::table('bc')->where('user_id', $user->user_id)->first();
+                    $tanggalMasuk = $bcModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                    if ($tanggalMasuk) {
+                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                    }
+                } elseif ($karyawan) {
+                    $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            }
+            // 3. Supervisor: Mengakses data transaksi seluruh wilayah penjualan
+            elseif ($namaRole === 'supervisor') {
+                // Supervisor dapat memantau data seluruh wilayah
             }
         }
 
@@ -68,6 +88,13 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $penjualanBase = $this->basePenjualanQuery();
+
+        $selectedWilayah = $request->query('wilayah');
+        $sortBy = $request->query('sort_by', 'omzet_desc');
+        $selectedStatus = $request->query('status');
+        $searchQuery = $request->query('q');
+
+        $daftarWilayah = DB::table('wilayah')->orderBy('nama_wilayah')->pluck('nama_wilayah');
 
         // 1. Daftar semua periode yang tersedia dari data riil penjualan BC/SPG/Supervisor
         $availablePeriods = (clone $penjualanBase)
@@ -152,32 +179,63 @@ class DashboardController extends Controller
             });
 
         // 7. Petugas (BC / SPG / Supervisor) per outlet
-        $petugasPerOutlet = (clone $penjualanBulanIni)
-            ->select('penjualan.outlet_id', 'karyawan.nama_karyawan', 'role.nama_role')
+        $penjualanBulanIniRows = (clone $penjualanBulanIni)
+            ->select('penjualan.outlet_id', 'penjualan.karyawan_id', 'penjualan.bc_karyawan_id', 'penjualan.spg_karyawan_id')
             ->distinct()
-            ->get()
-            ->groupBy('outlet_id')
-            ->map(function ($items) {
-                return $items->map(function ($k) {
-                    $shortRole = match (strtolower($k->nama_role)) {
+            ->get();
+
+        $allKaryawanIds = $penjualanBulanIniRows->pluck('karyawan_id')
+            ->merge($penjualanBulanIniRows->pluck('bc_karyawan_id'))
+            ->merge($penjualanBulanIniRows->pluck('spg_karyawan_id'))
+            ->filter()
+            ->unique();
+
+        $karyawanMap = Karyawan::with('role')->whereIn('karyawan_id', $allKaryawanIds)->get()->keyBy('karyawan_id');
+
+        $petugasPerOutlet = $penjualanBulanIniRows->groupBy('outlet_id')->map(function ($items) use ($karyawanMap) {
+            $petugasList = collect();
+            foreach ($items as $item) {
+                if ($item->bc_karyawan_id && isset($karyawanMap[$item->bc_karyawan_id])) {
+                    $k = $karyawanMap[$item->bc_karyawan_id];
+                    $petugasList->push("BC: {$k->nama_karyawan}");
+                }
+                if ($item->spg_karyawan_id && isset($karyawanMap[$item->spg_karyawan_id])) {
+                    $k = $karyawanMap[$item->spg_karyawan_id];
+                    $petugasList->push("SPG: {$k->nama_karyawan}");
+                }
+                if (! $item->bc_karyawan_id && ! $item->spg_karyawan_id && $item->karyawan_id && isset($karyawanMap[$item->karyawan_id])) {
+                    $k = $karyawanMap[$item->karyawan_id];
+                    $shortRole = match (strtolower($k->role?->nama_role ?? $k->jabatan ?? '')) {
                         'beauty consultant', 'bc' => 'BC',
                         'sales promotion girl', 'spg' => 'SPG',
                         'supervisor' => 'Supervisor',
-                        default => $k->nama_role,
+                        default => 'PIC',
                     };
+                    $petugasList->push("{$shortRole}: {$k->nama_karyawan}");
+                }
+            }
 
-                    return "{$shortRole}: {$k->nama_karyawan}";
-                })->unique()->implode(', ');
-            });
+            return $petugasList->unique()->implode(', ');
+        });
 
         // 8. Rekap data penjualan per outlet periode ini
-        $outletsDataRaw = (clone $penjualanBulanIni)
+        $outletsQuery = (clone $penjualanBulanIni)
             ->join('outlet', 'outlet.outlet_id', '=', 'penjualan.outlet_id')
             ->leftJoin('wilayah', 'wilayah.wilayah_id', '=', 'outlet.wilayah_id')
             ->selectRaw('penjualan.outlet_id, outlet.nama_outlet, outlet.tipe_outlet, wilayah.nama_wilayah, SUM(penjualan.total_harga) as omzet, COUNT(penjualan.penjualan_id) as frekuensi')
-            ->groupBy('penjualan.outlet_id', 'outlet.nama_outlet', 'outlet.tipe_outlet', 'wilayah.nama_wilayah')
-            ->orderByDesc('omzet')
-            ->get();
+            ->groupBy('penjualan.outlet_id', 'outlet.nama_outlet', 'outlet.tipe_outlet', 'wilayah.nama_wilayah');
+
+        // filter ketika dipilih di Select Button
+        if (! empty($selectedWilayah)) {
+            $outletsQuery->where('wilayah.nama_wilayah', $selectedWilayah);
+        }
+
+        // filter ketika user input keyword di search
+        if (! empty($searchQuery)) {
+            $outletsQuery->where('outlet.nama_outlet', 'like', '%'.$searchQuery.'%');
+        }
+
+        $outletsDataRaw = $outletsQuery->orderByDesc('omzet')->get();
 
         $totalOutletAktif = $outletsDataRaw->count();
         $totalOmzetBaseline = $totalOmzet > 0 ? $totalOmzet : 1.0;
@@ -209,19 +267,24 @@ class DashboardController extends Controller
 
             // Pengelompokan
             $persen_ranking = $totalOutletAktif > 0 ? (($index + 1) / $totalOutletAktif) * 100 : 50;
-            if ($persen_ranking <= 30) {
-                $cluster = 'Cluster 1 (Ramai)';
+            if ($persen_ranking <= 20) {
+                $cluster = 'Cluster 1 (Sangat Tinggi)';
                 $clusterCode = 'C1';
-                $status = 'Tinggi';
-                $rekomendasi = 'Pertahankan stok produk unggulan & prioritaskan alokasi promo loyalitas';
-            } elseif ($persen_ranking <= 70) {
-                $cluster = 'Cluster 2 (Sedang)';
+                $status = 'Sangat Tinggi (Sangat Ramai)';
+                $rekomendasi = 'Pertahankan stok produk unggulan';
+            } elseif ($persen_ranking <= 30) {
+                $cluster = 'Cluster 2 (Ramai)';
                 $clusterCode = 'C2';
+                $status = 'Tinggi (Ramai)';
+                $rekomendasi = 'Tingkatkan penjualan dan berikan diskon 20% untuk produk tertentu';
+            } elseif ($persen_ranking <= 70) {
+                $cluster = 'Cluster 3 (Sedang)';
+                $clusterCode = 'C3';
                 $status = 'Sedang';
                 $rekomendasi = 'Tingkatkan frekuensi promosi & variasi paket produk';
             } else {
-                $cluster = 'Cluster 3 (Sepi)';
-                $clusterCode = 'C3';
+                $cluster = 'Cluster 4 (Sepi)';
+                $clusterCode = 'C4';
                 $status = 'Rendah';
                 $rekomendasi = 'Evaluasi kunjungan BC/SPG, diskon khusus, & evaluasi minat pasar';
             }
@@ -245,6 +308,40 @@ class DashboardController extends Controller
                 'status' => $status,
                 'rekomendasi' => $rekomendasi,
             ];
+        });
+
+        // filter status dipilih di select button
+        if (! empty($selectedStatus)) {
+            $peringkatOutlet = $peringkatOutlet->where('status', $selectedStatus)->values();
+        }
+
+        switch ($sortBy) {
+            case 'frekuensi_desc':
+                $peringkatOutlet = $peringkatOutlet->sortByDesc('frekuensi')->values();
+                break;
+
+            case 'growth_desc':
+                $peringkatOutlet = $peringkatOutlet->sortByDesc('growth')->values();
+                break;
+
+            case 'produk_desc':
+                $peringkatOutlet = $peringkatOutlet->sortByDesc('jumlah_produk')->values();
+                break;
+
+            case 'kontribusi_desc':
+                $peringkatOutlet = $peringkatOutlet->sortByDesc('kontribusi')->values();
+                break;
+
+            case 'omzet_desc':
+            default:
+                $peringkatOutlet = $peringkatOutlet->sortByDesc('omzet')->values();
+                break;
+        }
+
+        $peringkatOutlet = $peringkatOutlet->map(function ($item, $index) {
+            $item->rank = $index + 1;
+
+            return $item;
         });
 
         // Outlet dengan penjualan tertinggi dan terendah
@@ -316,7 +413,10 @@ class DashboardController extends Controller
             'produkTerlarisOverall',
             'trenBulanan',
             'distribusiCluster',
-            'analisisInfo'
+            'analisisInfo',
+            'daftarWilayah',
+            'selectedWilayah',
+            'sortBy',
         ));
     }
 }

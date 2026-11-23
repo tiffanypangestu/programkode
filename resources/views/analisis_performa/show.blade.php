@@ -235,11 +235,29 @@
 
         {{-- Tabel 5 Indikator Variabel dan Rekomendasi Promosi --}}
         <div class="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-            <div class="border-b border-gray-100 px-6 py-5">
+            <div class="border-b border-gray-100 px-6 py-5 flex items-center justify-between">
                 <h2 class="text-base font-semibold text-gray-900">Performa Outlet & Rekomendasi Strategi
                 </h2>
-            </div>
+                <div class="inline-flex rounded-xl bg-gray-100 p-1 text-xs font-medium self-start sm:self-auto">
+                    <button type="button" onclick="filterTabelWilayah('semua', this)"
+                        class="btn-filter-wilayah active rounded-lg px-3.5 py-1.5 bg-white text-green-800 font-semibold shadow-sm transition">
+                        Semua
+                    </button>
+                    <button type="button" onclick="filterTabelWilayah('dalam_kota', this)"
+                        class="btn-filter-wilayah rounded-lg px-3.5 py-1.5 text-gray-600 hover:text-gray-900 transition">
+                        Dalam Kota
+                    </button>
+                    <button type="button" onclick="filterTabelWilayah('luar_kota', this)"
+                        class="btn-filter-wilayah rounded-lg px-3.5 py-1.5 text-gray-600 hover:text-gray-900 transition">
+                        Luar Kota
+                    </button>
+                    <button type="button" onclick="filterTabelWilayah('luar_pulau', this)"
+                        class="btn-filter-wilayah rounded-lg px-3 py-1 text-gray-600 hover:text-gray-900 transition">
+                        Luar Pulau
+                    </button>
 
+                </div>
+            </div>
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -251,7 +269,8 @@
                             <th class="px-6 py-3.5 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
                                 Nama Outlet
                             </th>
-                            <th class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
+                            <th
+                                class="px-6 py-3.5 text-right text-xs font-semibold uppercase tracking-wider text-gray-500">
                                 Omzet (Rp)
                             </th>
                             <th
@@ -317,12 +336,15 @@
                                 }
                             @endphp
 
-                            <tr class="transition hover:bg-gray-50">
+                            <tr class="baris-outlet transition hover:bg-gray-50"
+                                data-wilayah="{{ $item['kategori_wilayah'] ?? 'dalam_kota' }}">
                                 <td class="whitespace-nowrap px-6 py-4 text-center text-xs font-semibold text-gray-500">
                                     #{{ $item['id_outlet'] }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4">
                                     <div class="font-semibold text-gray-900">{{ $item['nama_outlet'] }}</div>
+                                    <div class="text-[11px] text-gray-400 font-medium">{{ $item['nama_wilayah'] ?? '-' }}
+                                    </div>
                                     @if (!empty($item['petugas']))
                                         <div class="mt-0.5 text-xs text-emerald-700 font-medium flex items-center gap-1">
                                             <svg class="h-3 w-3 text-emerald-500 inline-block shrink-0"
@@ -372,6 +394,11 @@
                             <tr>
                                 <td colspan="8" class="px-6 py-12 text-center text-gray-500">
                                     Tidak terdapat data hasil analisis untuk periode ini.
+                                </td>
+                            </tr>
+                            <tr id="baris-kosong-wilayah" style="display: none;">
+                                <td colspan="10" class="px-6 py-8 text-center text-sm text-gray-500">
+                                    Tidak ada outlet pada wilayah ini.
                                 </td>
                             </tr>
                         @endforelse
@@ -674,5 +701,35 @@
                 });
             }
         });
+
+        function filterTabelWilayah(kategori, btn) {
+            document.querySelectorAll('.btn-filter-wilayah').forEach(function(el) {
+                el.classList.remove('bg-white', 'text-green-800', 'font-semibold', 'shadow-sm');
+                el.classList.add('text-gray-600');
+            });
+            if (btn) {
+                btn.classList.add('bg-white', 'text-green-800', 'font-semibold', 'shadow-sm');
+                btn.classList.remove('text-gray-600');
+            }
+
+            // baris tabel di filter
+            const semua_baris = document.querySelectorAll('.baris-outlet');
+            let totalTampil = 0;
+
+            semua_baris.forEach(function(row) {
+                const wilayah_baris = row.getAttribute('data-wilayah');
+                if (kategori === 'semua' || wilayah_baris === kategori) {
+                    row.style.display = '';
+                    totalTampil++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            const baris_kosong = document.getElementById('baris-kosong-wilayah');
+            if (baris_kosong) {
+                baris_kosong.style.display = (totalTampil === 0) ? '' : 'none';
+            }
+        };
     </script>
 @endsection

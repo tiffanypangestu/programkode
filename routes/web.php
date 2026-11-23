@@ -1,4 +1,3 @@
-
 <?php
 
 use App\Http\Controllers\AnalisisPerformaController;
@@ -24,6 +23,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
+|--------------------------------------------------------------------------
+| Hak akses (RBAC) - dicek di server lewat middleware 'role'
+|--------------------------------------------------------------------------
+| Mengikuti menu di sidebar.blade.php:
+|
+| Semua peran (Admin, Supervisor, BC, SPG) : Dashboard, Penjualan, Analisis Performa
+| Admin dan Supervisor                      : Import Excel, Transaksi, Detail Transaksi,
+|                                             Outlet Performance
+| Admin saja                                : Master Data, Karyawan/BC/SPG, Promosi
+|
+| 'BC' dan 'SPG' sudah otomatis cocok dengan 'Beauty Consultant' dan
+| 'Sales Promotion Girl' (lihat $roleMap di RoleMiddleware).
+| Aturan yang lebih halus (misalnya SPG hanya melihat outlet miliknya)
+| tetap dicek di dalam controller.
+*/
+
+/*
 Halaman Publik
 */
 
@@ -32,39 +48,43 @@ Route::get('/', function () {
 })->name('home');
 
 /*
-Authentication
+Authentication (hanya untuk tamu)
 */
 
 Route::middleware('guest')->group(function () {
 
-    // Login
-    Route::get('/login', [AuthController::class, 'showLoginForm'])
-        ->name('login');
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.process');
 
-    Route::post('/login', [AuthController::class, 'login'])
-        ->name('login.process');
+    // Pendaftaran: jabatan Admin dan Supervisor TIDAK boleh dipilih sendiri.
+    // Batasi di RegisterController dengan Rule::in([...]).
+    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [RegisterController::class, 'register'])->name('register.store');
 
-    // Register
-    Route::get('/register', [RegisterController::class, 'showRegistrationForm'])
-        ->name('register');
-
-    Route::post('/register', [RegisterController::class, 'register'])
-        ->name('register.store');
-
-    // Lupa Password
     Route::get('/forgot-password', function () {
         return view('auth.forgot-password');
     })->name('password.request');
 
     Route::post('/forgot-password', function (Request $request) {
-        $request->validate([
-            'email' => ['required', 'email'],
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'exists:users,email'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'email.required' => 'Email terdaftar wajib diisi.',
+            'email.exists' => 'Email tidak terdaftar dalam sistem.',
+            'password.required' => 'Password baru wajib diisi.',
+            'password.min' => 'Password baru minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password baru tidak cocok.',
         ]);
 
-        return back()->with(
-            'status',
-            'Form Lupa Password berhasil dikirim. Pengiriman email reset password belum diaktifkan.'
-        );
+        $user = \App\Models\User::where('email', $validated['email'])->first();
+        if ($user) {
+            $user->update([
+                'password' => \Illuminate\Support\Facades\Hash::make($validated['password']),
+            ]);
+        }
+
+        return redirect()->route('login')->with('success', 'Password berhasil diperbarui! Silakan login dengan password baru Anda.');
     })->name('password.email');
 });
 
@@ -74,101 +94,90 @@ Halaman yang perlu login
 
 Route::middleware('auth')->group(function () {
 
-    /*
-    | Dashboard
-    */
-
-    Route::get('/dashboard', [DashboardController::class, 'index'])
-        ->name('dashboard');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     /*
-    | Master Data
+    |----------------------------------------------------------------------
+    | ADMIN DAN SUPERVISOR
+    |----------------------------------------------------------------------
     */
+    Route::middleware('role:Admin,Supervisor')->group(function () {
 
-    Route::resource('wilayah', WilayahController::class);
+        // Import Excel penjualan. HARUS di atas Route::resource('penjualan') supaya
+        // /penjualan/import tidak tertangkap oleh /penjualan/{penjualan}.
+        // (PenjualanImportController tidak punya cek peran sendiri)
+        Route::get('/penjualan/import', [PenjualanImportController::class, 'create'])
+            ->name('penjualan.import.form');
+        Route::post('/penjualan/import', [PenjualanImportController::class, 'store'])
+            ->name('penjualan.import.store');
+        Route::post('/penjualan/import/batch', [PenjualanImportController::class, 'processBatch'])
+            ->name('penjualan.import.batch');
+        Route::get('/penjualan/import/progress', [PenjualanImportController::class, 'progress'])
+            ->name('penjualan.import.progress');
 
-    Route::resource('kategori', KategoriController::class);
+        // Transaksi
+        Route::resource('transaksi', TransaksiController::class);
+        Route::resource('transaksi-detail', TransaksiDetailController::class);
 
-    Route::resource('produk', ProdukController::class);
-
-    Route::resource('harga-produk', HargaProdukController::class);
-    Route::get('/harga-produk-set/{produk}', [HargaProdukController::class, 'set'])->name('harga-produk.set');
-    Route::post('/harga-produk-set/{produk}', [HargaProdukController::class, 'saveSet'])->name('harga-produk.save-set');
-
-    Route::resource('outlet', OutletController::class);
+        // Performa outlet (data manual)
+        Route::resource('outlet-performance', OutletPerformanceController::class);
+        // Analisis Performa Outlet (K-Means)
+        Route::get('/analisis-performa', [AnalisisPerformaController::class, 'index'])
+            ->name('analisis-performa.index');
+        Route::post('/analisis-performa/proses', [AnalisisPerformaController::class, 'proses'])
+            ->name('analisis-performa.proses');
+        Route::get('/analisis-performa/{periode}', [AnalisisPerformaController::class, 'show'])
+            ->name('analisis-performa.show');
+    });
 
     /*
-    | Karyawan dan Tenaga Lapangan
+    |----------------------------------------------------------------------
+    | SEMUA PERAN: Admin, Supervisor, BC, SPG
+    |----------------------------------------------------------------------
     */
+    Route::middleware('role:Admin,Supervisor,BC,SPG')->group(function () {
 
-    Route::resource('karyawan', KaryawanController::class);
+        // Dashboard
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::resource('spg', SpgController::class);
+        // Penjualan: rute khusus ditulis SEBELUM resource supaya tidak
+        // tertangkap oleh /penjualan/{penjualan}
+        Route::get('/penjualan/import/template', [PenjualanController::class, 'downloadTemplate'])
+            ->name('penjualan.download-template');
+        Route::get('/penjualan/stok-outlet/{outlet}', [PenjualanController::class, 'getStokOutletJson'])
+            ->name('penjualan.stok-outlet');
+        Route::get('/penjualan/{penjualan}/pdf', [PenjualanController::class, 'downloadPdf'])
+            ->name('penjualan.pdf');
 
-    Route::resource('bc', BcController::class);
+        Route::resource('penjualan', PenjualanController::class);
+    });
 
     /*
-    | Promosi
+    |----------------------------------------------------------------------
+    | ADMIN SAJA
+    |----------------------------------------------------------------------
     */
+    Route::middleware('role:Admin')->group(function () {
 
-    Route::resource('promosi', PromosiController::class);
+        // Master Data
+        Route::resource('outlet', OutletController::class);
+        Route::resource('wilayah', WilayahController::class);
+        Route::resource('kategori', KategoriController::class);
+        Route::resource('produk', ProdukController::class);
+        Route::resource('harga-produk', HargaProdukController::class);
+        Route::get('/harga-produk-set/{produk}', [HargaProdukController::class, 'set'])
+            ->name('harga-produk.set');
+        Route::post('/harga-produk-set/{produk}', [HargaProdukController::class, 'saveSet'])
+            ->name('harga-produk.save-set');
 
-    Route::resource('jadwal-promosi', JadwalPromosiController::class);
+        // Manajemen Karyawan
+        Route::resource('karyawan', KaryawanController::class);
+        Route::resource('spg', SpgController::class);
+        Route::resource('bc', BcController::class);
 
-    /*
-    | Transaksi dan Penjualan
-    */
-
-    Route::resource('transaksi', TransaksiController::class);
-
-    Route::resource('transaksi-detail', TransaksiDetailController::class);
-    Route::get('/penjualan/import', [PenjualanImportController::class, 'create'])->name('penjualan.import.form');
-
-    Route::post('/penjualan/import', [PenjualanImportController::class, 'store'])->name('penjualan.import.store');
-
-    Route::post('/penjualan/import/batch', [PenjualanImportController::class, 'processBatch'])->name('penjualan.import.batch');
-
-    Route::get('/penjualan/import/progress', [PenjualanImportController::class, 'progress'])->name('penjualan.import.progress');
-    Route::get('/penjualan/{penjualan}/pdf', [PenjualanController::class, 'downloadPdf'])->name('penjualan.pdf');
-
-    Route::get('/penjualan/import/template', [PenjualanController::class, 'downloadTemplate'])->name('penjualan.download-template');
-    Route::get('/penjualan/stok-outlet/{outlet}', [PenjualanController::class, 'getStokOutletJson'])->name('penjualan.stok-outlet');
-
-    Route::resource('penjualan', PenjualanController::class);
-
-    /*
-    | Analisis Performa Outlet
-    */
-
-    Route::resource(
-        'outlet-performance',
-        OutletPerformanceController::class
-    );
-
-    Route::resource(
-        'analisis-performa',
-        AnalisisPerformaController::class
-    );
-
-    // Menampilkan halaman riwayat analisis (index)
-    Route::get('/analisis-performa', [AnalisisPerformaController::class, 'index'])->name('analisis-performa.index');
-
-    // Memproses eksekusi analisis K-Means (proses)
-    Route::post('/analisis-performa/proses', [AnalisisPerformaController::class, 'proses'])->name('analisis-performa.proses');
-
-    // Menampilkan detail visualisasi grafik & rekomendasi (show)
-    Route::get('/analisis-performa/{periode}', [AnalisisPerformaController::class, 'show'])->name('analisis-performa.show');
-
-    /*
-    | Logout
-    */
-
-    Route::post('/logout', [AuthController::class, 'logout'])
-        ->name('logout');
+        // Promosi
+        Route::resource('promosi', PromosiController::class);
+        Route::resource('jadwal-promosi', JadwalPromosiController::class);
+    });
 });
 
-Route::middleware(['auth', 'role:Admin,Supervisor,BC,SPG,Beauty Consultant,Sales Promotion Girl'])->group(function () {
-    Route::get('/penjualan/create', [PenjualanController::class, 'create'])->name('penjualan.create');
-    Route::post('/penjualan', [PenjualanController::class, 'store'])->name('penjualan.store');
-    Route::get('/penjualan', [PenjualanController::class, 'index'])->name('penjualan.index');
-});

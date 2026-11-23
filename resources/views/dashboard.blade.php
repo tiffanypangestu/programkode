@@ -10,10 +10,13 @@
                 <h1 class="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-gray-800">
                     Dashboard Performa Outlet
                 </h1>
+                <p class="text-xs sm:text-sm font-semibold text-emerald-700 mt-1">
+                    Periode: {{ \Carbon\Carbon::parse($selectedPeriode . '-01')->translatedFormat('F Y') }}
+                </p>
             </div>
 
             {{-- Filter Periode & Cetak Laporan --}}
-            <div class="flex flex-wrap items-center gap-3">
+            <div class="flex flex-wrap items-center gap-3 no-print">
                 <form action="{{ route('dashboard') }}" method="GET" class="flex items-center gap-2">
 
                     <label for="periode-select" class="text-xs font-semibold uppercase tracking-wider text-gray-500">
@@ -30,7 +33,7 @@
                 </form>
 
                 <button type="button" onclick="window.print()"
-                    class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95">
+                    class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 active:scale-95 hover:text-gray-900">
                     <svg class="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -115,7 +118,8 @@
                             {{ number_format($growthTransaksiPerusahaan, 2) }}%
                         </span>
                     @endif
-                    <span class="text-gray-400">Rata-rata: {{ $rataRataTransaksiPerOutlet }} transaksi per outlet</span>
+                    <span class="text-gray-400">Rata-rata: {{ number_format($rataRataTransaksiPerOutlet, 0) }} transaksi
+                        per outlet</span>
                 </div>
             </div>
 
@@ -140,7 +144,7 @@
                     </div>
                 </div>
                 <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
-                    <span>Rata-rata: {{ $totalTransaksi > 0 ? round($totalProdukTerjual / $totalTransaksi, 1) : 0 }} pcs
+                    <span>Rata-rata: {{ $totalTransaksi > 0 ? round($totalProdukTerjual / $totalTransaksi, 0) : 0 }} pcs
                         per transaksi</span>
                 </div>
             </div>
@@ -318,51 +322,19 @@
         </div>
 
         {{-- Visualisasi Data & Grafik (Chart.js) --}}
-        <div class="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-3">
-            {{-- Grafik 1: Tren Omzet & Transaksi Bulanan (Span 2 cols) --}}
-            <div class="rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-sm lg:col-span-2">
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5">
-                    <div>
-                        <h3 class="text-base font-semibold text-gray-800">Tren Pertumbuhan Omzet & Transaksi Perusahaan
-                        </h3>
-                        <p class="text-xs text-gray-500">Pergerakan total penjualan dan jumlah transaksi bulanan.</p>
-                    </div>
-                    <span
-                        class="mt-2 sm:mt-0 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-lg">
-                        12 Bulan Terakhir
-                    </span>
+        <div class="rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-5">
+                <div>
+                    <h3 class="text-base font-semibold text-gray-800">Tren Pertumbuhan Omzet & Transaksi Perusahaan
+                    </h3>
                 </div>
-                <div class="relative h-72 w-full">
-                    <canvas id="trenBulananChart"></canvas>
-                </div>
+                <span
+                    class="mt-2 sm:mt-0 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-lg">
+                    12 Bulan Terakhir
+                </span>
             </div>
-
-            {{-- Grafik 2: Distribusi Pengelompokan / Cluster Outlet (Span 1 col) --}}
-            <div class="rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-sm flex flex-col justify-between">
-                <div class="mb-4">
-                    <h3 class="text-base font-semibold text-gray-800">Hasil Pengelompokkan Outlet</h3>
-                    <p class="text-xs text-gray-500">Proporsi outlet berdasarkan kategori klaster performa.</p>
-                </div>
-                <div class="relative h-56 w-full flex items-center justify-center">
-                    <canvas id="clusterPieChart"></canvas>
-                </div>
-                <div class="mt-5 grid grid-cols-3 gap-2.5 text-center text-xs border-t border-gray-100 pt-3.5">
-                    <div class="p-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-100/60">
-                        <p class="font-medium text-[11px]">Tinggi (C1)</p>
-                        <p class="text-base font-bold text-emerald-700">{{ $distribusiCluster['tinggi'] }}</p>
-                        <p class="text-[10px] text-gray-500">{{ $distribusiCluster['persen_tinggi'] }}%</p>
-                    </div>
-                    <div class="p-2 rounded-xl bg-amber-50 text-amber-800 border border-amber-100/60">
-                        <p class="font-medium text-[11px]">Sedang (C2)</p>
-                        <p class="text-base font-bold text-amber-700">{{ $distribusiCluster['sedang'] }}</p>
-                        <p class="text-[10px] text-gray-500">{{ $distribusiCluster['persen_sedang'] }}%</p>
-                    </div>
-                    <div class="p-2 rounded-xl bg-rose-50 text-rose-800 border border-rose-100/60">
-                        <p class="font-medium text-[11px]">Rendah (C3)</p>
-                        <p class="text-base font-bold text-rose-700">{{ $distribusiCluster['rendah'] }}</p>
-                        <p class="text-[10px] text-gray-500">{{ $distribusiCluster['persen_rendah'] }}%</p>
-                    </div>
-                </div>
+            <div class="relative h-72 w-full">
+                <canvas id="trenBulananChart"></canvas>
             </div>
         </div>
 
@@ -373,8 +345,6 @@
                 <div class="mb-5 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-gray-800">Top 10 Outlet Berdasarkan Omzet</h3>
-                        <p class="text-xs text-gray-500">Perbandingan 10 outlet dengan nilai penjualan terbesar periode
-                            ini.</p>
                     </div>
                     <span class="text-xs font-medium text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">Peringkat
                         1-10</span>
@@ -384,13 +354,11 @@
                 </div>
             </div>
 
-            {{-- Grafik 4: Produk Paling Laku Terjual (Overall) --}}
+            {{-- Grafik 4: Produk Paling Laku Terjual --}}
             <div class="rounded-2xl border border-gray-100 bg-white p-6 sm:p-7 shadow-sm">
                 <div class="mb-5 flex items-center justify-between">
                     <div>
                         <h3 class="text-base font-semibold text-gray-800">Produk Paling Laku Terjual</h3>
-                        <p class="text-xs text-gray-500">Jumlah kuantitas (pcs) produk paling diminati pelanggan secara
-                            keseluruhan.</p>
                     </div>
                     <span
                         class="text-xs font-medium text-indigo-700 bg-indigo-50 border border-indigo-100 px-2.5 py-1 rounded-lg">Top
@@ -413,26 +381,77 @@
                             {{ $totalOutletAktif }} Outlet Aktif
                         </span>
                     </h2>
-                    <p class="mt-1 text-xs text-gray-500">
-                        Daftar urutan outlet berdasarkan performa penjualan, tingkat kontribusi terhadap total omzet
-                        perusahaan, frekuensi transaksi, dan status hasil analisis.
-                    </p>
                 </div>
 
                 {{-- Search & Filter Klaster --}}
-                <div class="flex items-center gap-3">
+                <form action="{{ route('dashboard') }}" method="GET" class="flex flex-wrap items-center gap-2.5 no-print">
+                    <input type="hidden" nama="periode" value="{{ $selectedPeriode }}">
+
+                    {{-- Cari outlet --}}
                     <div class="relative">
-                        <input type="text" id="tableSearch" placeholder="Cari nama outlet..."
-                            class="w-48 sm:w-64 rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-800 placeholder-gray-400 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" />
+                        <input type="text" name="q" value="{{ request('q') }}"
+                            placeholder="Cari nama outlet..."
+                            class="w-36 sm:w-48 rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder-gray-500 shadow-sm focus:border-green-600 focus:outline-none">
                     </div>
-                    <select id="filterCluster"
-                        class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-emerald-500 focus:outline-none">
-                        <option value="">Semua Status</option>
-                        <option value="Tinggi">Tinggi (C1)</option>
-                        <option value="Sedang">Sedang (C2)</option>
-                        <option value="Rendah">Rendah (C3)</option>
+
+                    {{-- Filter Wilayah --}}
+                    <select name="wilayah" onchange="this.form.submit()"
+                        class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-green-600 focus:outline-none">
+                        <option value="">Semua Wilayah</option>
+                        @foreach ($daftarWilayah as $wilayah)
+                            <option value="{{ $wilayah }}" {{ request('wilayah') == $wilayah ? 'selected' : '' }}>
+                                {{ $wilayah }}
+                            </option>
+                        @endforeach
                     </select>
-                </div>
+
+                    {{-- Filter Cluster --}}
+                    {{-- Filter Cluster (4 Pilihan) --}}
+                    <select name="status" onchange="this.form.submit()"
+                        class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-green-600 focus:outline-none">
+                        <option value="">Semua Cluster</option>
+
+                        <option value="Sangat Tinggi (Sangat Ramai)"
+                            {{ request('status') == 'Sangat Tinggi (Sangat Ramai)' ? 'selected' : '' }}>
+                            C1 - Sangat Tinggi (Sangat Ramai)
+                        </option>
+
+                        <option value="Tinggi (Ramai)" {{ request('status') == 'Tinggi (Ramai)' ? 'selected' : '' }}>
+                            C2 - Tinggi (Ramai)
+                        </option>
+
+                        <option value="Sedang" {{ request('status') == 'Sedang' ? 'selected' : '' }}>
+                            C3 - Sedang
+                        </option>
+
+                        <option value="Rendah" {{ request('status') == 'Rendah' ? 'selected' : '' }}>
+                            C4 - Rendah (Sepi)
+                        </option>
+                    </select>
+
+                    {{-- Urutan Ranking --}}
+                    <select name="sort_by" onchange="this.form.submit()"
+                        class="rounded-xl border border-green-600 bg-green-50/50 px-3 py-1.5 text-xs font-semibold text-green-800 shadow focus:border-green-600 focus:outline-none">
+                        <option value="omzet_desc"
+                            {{ request('sort_by', 'omzet_desc') == 'omzet_desc' ? 'selected' : '' }}>
+                            Omzet Tertinggi
+                        </option>
+                        <option value="frekuensi_desc" {{ request('sort_by') == 'frekuensi_desc' ? 'selected' : '' }}>
+                            Frekuensi Terbanyak
+                        </option>
+                        <option value="growth_desc" {{ request('sort_by') == 'growth_desc' ? 'selected' : '' }}>
+                            Growth
+                        </option>
+                        <option value="produk_desc" {{ request('sort_by') == 'produk_desc' ? 'selected' : '' }}>
+                            Jumlah Produk Terjual
+                        </option>
+                        <option value="kontribusi_desc" {{ request('sort_by') == 'kontribusi_desc' ? 'selected' : '' }}>
+                            Kontribusi Outlet
+                        </option>
+                    </select>
+
+
+                </form>
             </div>
 
             <div class="overflow-x-auto">
@@ -547,20 +566,29 @@
 
                                 {{-- Status Performa & Cluster --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center">
-                                    @if ($row->status === 'Tinggi')
+                                    {{-- Cluster 1: Sangat Tinggi (Hijau Emerald) --}}
+                                    @if ($row->cluster_code === 'C1')
                                         <span
                                             class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                                            {{ $row->cluster_code }} • Tinggi (Ramai)
+                                            C1 • Sangat Tinggi (Sangat Ramai)
                                         </span>
-                                    @elseif ($row->status === 'Sedang')
+                                        {{-- Cluster 2: Tinggi (Biru) --}}
+                                    @elseif ($row->cluster_code === 'C2')
+                                        <span
+                                            class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
+                                            C2 • Tinggi (Ramai)
+                                        </span>
+                                        {{-- Cluster 3: Sedang (Kuning Amber) --}}
+                                    @elseif ($row->cluster_code === 'C3')
                                         <span
                                             class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                                            {{ $row->cluster_code }} • Sedang
+                                            C3 • Sedang
                                         </span>
+                                        {{-- Cluster 4: Rendah (Merah Mawar) --}}
                                     @else
                                         <span
                                             class="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800">
-                                            {{ $row->cluster_code }} • Rendah (Sepi)
+                                            C4 • Rendah (Sepi)
                                         </span>
                                     @endif
                                 </td>
@@ -688,41 +716,6 @@
                                 }
                             }
                         }
-                    }
-                });
-            }
-
-            // --- 2. Donut Chart Pengelompokan / Cluster Outlet ---
-            const distData = @json($distribusiCluster);
-            const ctxCluster = document.getElementById('clusterPieChart');
-            if (ctxCluster) {
-                new Chart(ctxCluster.getContext('2d'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Tinggi / Ramai (C1)', 'Sedang (C2)', 'Rendah / Sepi (C3)'],
-                        datasets: [{
-                            data: [distData.tinggi, distData.sedang, distData.rendah],
-                            backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
-                            hoverOffset: 4,
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                position: 'bottom',
-                                labels: {
-                                    boxWidth: 10,
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            }
-                        },
-                        cutout: '65%'
                     }
                 });
             }
@@ -870,5 +863,6 @@
             if (searchInput) searchInput.addEventListener('input', filterTable);
             if (filterSelect) filterSelect.addEventListener('change', filterTable);
         });
+
     </script>
 @endsection

@@ -148,6 +148,14 @@ class BcController extends Controller
                 'nama_bc' => $validated['nama_bc'],
                 'nomor_telepon' => $validated['nomor_telepon'] ?? null,
             ]);
+
+            $karyawan = Karyawan::where('user_id', $bc->user_id)->first();
+            if ($karyawan) {
+                $karyawan->update([
+                    'nama_karyawan' => $validated['nama_bc'],
+                    'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+                ]);
+            }
         });
 
         return redirect()->route('bc.index')->with('success', 'Data BC berhasil diupdate!');

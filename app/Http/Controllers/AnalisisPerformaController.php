@@ -23,7 +23,7 @@ class AnalisisPerformaController extends Controller
             'BC',
             'SPG',
         ];
-        $allowedRoleIds = [2, 3, 4]; // 2: Supervisor, 3: BC, 4: SPG
+        $allowedRoleIds = [2, 3, 4];
 
         $query = DB::table('penjualan')
             ->join('karyawan', 'karyawan.karyawan_id', '=', 'penjualan.karyawan_id')
@@ -34,28 +34,41 @@ class AnalisisPerformaController extends Controller
                     ->orWhereIn('role.role_id', $allowedRoleIds);
             });
 
-        // Filter scope berdasarkan role user yang sedang login jika bukan Admin
+        // Filter scope berdasarkan role user yang sedang login
         $user = Auth::user();
         if ($user) {
             $namaRole = strtolower($user->role?->nama_role ?? '');
             $karyawan = $user->karyawan;
 
             if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
-                if ($karyawan) {
+                $outletId = $karyawan?->outlets()->value('outlet.outlet_id');
+                if ($outletId) {
+                    $query->where('penjualan.outlet_id', $outletId);
+
+                    $spgModel = DB::table('spg')->where('user_id', $user->user_id)->first();
+                    $tanggalMasuk = $spgModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                    if ($tanggalMasuk) {
+                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                    }
+                } elseif ($karyawan) {
                     $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
-                }
-            } elseif ($namaRole === 'supervisor') {
-                if ($user->wilayah_id ?? null) {
-                    $query->join('outlet as out_spv', 'out_spv.outlet_id', '=', 'penjualan.outlet_id')
-                        ->where('out_spv.wilayah_id', $user->wilayah_id);
                 }
             } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
                 if ($karyawan && $karyawan->outlets()->exists()) {
                     $outletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->all();
                     $query->whereIn('penjualan.outlet_id', $outletIds);
+
+                    $bcModel = DB::table('bc')->where('user_id', $user->user_id)->first();
+                    $tanggalMasuk = $bcModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
+                    if ($tanggalMasuk) {
+                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                    }
                 } elseif ($karyawan) {
                     $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
+                } else {
+                    $query->whereRaw('1 = 0');
                 }
+            } elseif ($namaRole === 'supervisor') {
             }
         }
 
@@ -99,7 +112,7 @@ class AnalisisPerformaController extends Controller
         }
 
         // request ke FastAPI
-        $fastApiUrl = rtrim(env('FASTAPI_URL', 'http://127.0.0.1:8001'), '/');
+        $fastApiUrl = rtrim(config('services.fastapi.url', 'http://127.0.0.1:8001'), '/');
         try {
             $response = Http::timeout(15)->post($fastApiUrl.'/api/analisa-clustering', [
                 'periode' => $periode_analisis,
@@ -122,7 +135,7 @@ class AnalisisPerformaController extends Controller
 
         $hasil_clustering = null;
 
-        $fastApiUrl = rtrim(env('FASTAPI_URL', 'http://127.0.0.1:8001'), '/');
+        $fastApiUrl = rtrim(config('services.fastapi.url', 'http://127.0.0.1:8001'), '/');
         try {
             $response = Http::timeout(15)->post($fastApiUrl.'/api/analisa-clustering', [
                 'periode' => $periode_analisis,
@@ -151,15 +164,32 @@ class AnalisisPerformaController extends Controller
             }
         }
 
-        // gabungkan data outlet dengan hasil cluster
-        $data_outlet_gabungan = DB::table('outlet')->pluck('nama_outlet', 'outlet_id');
+        // gabungkan data outlet + wilayah dengan hasil cluster
+        $data_outlet_wilayah = DB::table('outlet')->leftJoin('wilayah', 'outlet.wilayah_id', '=', 'wilayah.wilayah_id')->select('outlet.outlet_id', 'outlet.nama_outlet', 'outlet.wilayah_id', 'wilayah.nama_wilayah')->get()->keyBy('outlet_id');
 
-        $rekapan_outlet = collect($load_data)->map(function ($indikator) use ($hasil_clustering, $data_outlet_gabungan) {
+        $rekapan_outlet = collect($load_data)->map(function ($indikator) use ($hasil_clustering, $data_outlet_wilayah) {
             $info_hasil_cluster = collect($hasil_clustering['data']['data'] ?? [])->firstWhere('id_outlet', $indikator['id_outlet']);
+            // ambil data normalisasi
+            
+            $outletInfo = $data_outlet_wilayah->get($indikator['id_outlet']);
+            $namaWilayah = $outletInfo->nama_wilayah ?? 'Dalam Kota';
+
+            // klasifikasi nama wilayah ke filter
+            $nama_wilayah_filter = strtolower($namaWilayah);
+            if (str_contains($nama_wilayah_filter, 'luar pulau')) {
+                $kategoriWilayah = 'luar_pulau';
+            } elseif (str_contains($nama_wilayah_filter, 'luar kota')) {
+                $kategoriWilayah = 'luar_kota';
+            } else {
+                $kategoriWilayah = 'dalam_kota';
+            }
 
             return [
                 'id_outlet' => $indikator['id_outlet'],
-                'nama_outlet' => $indikator['nama_outlet'] ?? ($data_outlet_gabungan[$indikator['id_outlet']] ?? 'Outlet#'.$indikator['id_outlet']),
+                'nama_outlet' => $indikator['nama_outlet'] ?? ($outletInfo->nama_outlet ?? 'Outlet#'.$indikator['id_outlet']),
+                'wilayah_id' => $outletInfo->wilayah_id ?? null,
+                'nama_wilayah' => $namaWilayah,
+                'kategori_wilayah' => $kategoriWilayah,
                 'omzet' => $indikator['omzet'],
                 'growth' => $indikator['growth'],
                 'frekuensi' => $indikator['frekuensi'],
@@ -187,7 +217,7 @@ class AnalisisPerformaController extends Controller
                     ]
                 );
             } catch (Exception $e) {
-                // Abaikan jika tabel belum siap atau error database
+
             }
         }
 
@@ -236,7 +266,7 @@ class AnalisisPerformaController extends Controller
             ->get()
             ->keyBy('outlet_id');
 
-        // Hitung jumlah_produk: transaksi → transaksi_detail
+        // Hitung jumlah_produk:
         $jumlah_produk_per_outlet = (clone $penjualanBulanIni)
             ->join('transaksi', function ($join) {
                 $join->whereRaw("transaksi.nomor_transaksi = CONCAT('TR-', penjualan.penjualan_id)");
@@ -270,17 +300,25 @@ class AnalisisPerformaController extends Controller
         $user = Auth::user();
         if ($user) {
             $namaRole = strtolower($user->role?->nama_role ?? '');
-            if ($namaRole === 'supervisor' && ($user->wilayah_id ?? null)) {
-                $outletQuery->where('wilayah_id', $user->wilayah_id);
-            } elseif (in_array($namaRole, ['beauty consultant', 'bc']) && $user->karyawan && $user->karyawan->outlets()->exists()) {
-                $outletQuery->whereIn('outlet_id', $user->karyawan->outlets()->pluck('outlet.outlet_id'));
-            } elseif (in_array($namaRole, ['sales promotion girl', 'spg']) && $user->karyawan) {
-                $activeOutletIds = (clone $penjualanBulanIni)->pluck('penjualan.outlet_id')->unique();
-                $outletQuery->whereIn('outlet_id', $activeOutletIds);
+            if ($namaRole === 'supervisor') {
+                // Supervisor dapat menganalisis seluruh wilayah
+            } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
+                if ($user->karyawan && $user->karyawan->outlets()->exists()) {
+                    $outletQuery->whereIn('outlet_id', $user->karyawan->outlets()->pluck('outlet.outlet_id'));
+                }
+            } elseif (in_array($namaRole, ['sales promotion girl', 'spg'])) {
+                $spgOutletId = $user->karyawan?->outlets()->value('outlet.outlet_id');
+                if ($spgOutletId) {
+                    $outletQuery->where('outlet_id', $spgOutletId);
+                }
             }
         }
 
-        $data_outlet = $outletQuery->select('outlet.outlet_id as id_outlet', 'outlet.nama_outlet')->get();
+        // sertakan relasi wilayah
+        $data_outlet = $outletQuery
+            ->leftJoin('wilayah', 'outlet.wilayah_id', '=', 'wilayah.wilayah_id')
+            ->select('outlet.outlet_id as id_outlet', 'outlet.nama_outlet', 'wilayah.nama_wilayah')
+            ->get();
 
         return $data_outlet->map(function ($item) use (
             $omzetFrekuensiPerOutlet,

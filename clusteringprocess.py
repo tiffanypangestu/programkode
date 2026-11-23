@@ -24,6 +24,7 @@ def metode_elbow(wcss_list: list, threshold: float = 0.15) -> int:
 
     return max(2, titik_n - 1)
 
+    
 
 def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
 
@@ -113,10 +114,10 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
                     rekomendasi = 'Evaluasi produk, cek daya beli wilayah, atau berikan event promosi khusus'
             elif n_cluster == 4:
                 if posisi_urutan == 0:
-                    status = 'Sangat Tinggi (Ramai)'
+                    status = 'Sangat Tinggi (Sangat Ramai) '
                     rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
                 elif posisi_urutan == 1:
-                    status = 'Tinggi'
+                    status = 'Tinggi (Ramai)'
                     rekomendasi = 'Tingkatkan kuota penjualan dan berikan diskon khusus bundling'
                 elif posisi_urutan == 2:
                     status = 'Sedang'
@@ -126,10 +127,10 @@ def proses_clustering(ListData: List[Any]) -> Dict[str, Any]:
                     rekomendasi = 'Evaluasi produk, cek daya beli wilayah, atau berikan event promosi khusus'
             else:
                 if posisi_urutan == 0:
-                    status = 'Sangat Tinggi (Ramai)'
+                    status = 'Sangat Tinggi (Sangat Ramai)'
                     rekomendasi = 'Pertahankan stok produk terlaris dan berikan promo bundling eksklusif'
                 elif posisi_urutan == 1:
-                    status = 'Tinggi'
+                    status = 'Tinggi (Ramai)'
                     rekomendasi = 'Tingkatkan kuota penjualan dan berikan diskon khusus bundling'
                 elif posisi_urutan == 2:
                     status = 'Sedang'

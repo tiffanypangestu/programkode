@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Data Penjualan')
+@section('title', in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Data Faktur Penjualan' : 'Data Transaksi Penjualan')
 
 @push('styles')
     {{-- Flatpickr CSS & MonthSelect Plugin CSS --}}
@@ -39,10 +39,10 @@
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 class="text-2xl font-bold tracking-tight text-gray-900">
-                        Data Penjualan
+                        {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Data Faktur Penjualan' : 'Data Transaksi Penjualan' }}
                     </h1>
                     <p class="mt-1 text-sm text-gray-500">
-                        Tempat mengelola dan memantau riwayat faktur penjualan UD Medan
+                        {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Tempat mengelola dan memantau riwayat faktur penjualan UD Medan' : 'Tempat memantau dan mencatat transaksi penjualan produk di outlet bertugas' }}
                     </p>
                 </div>
 
@@ -62,7 +62,9 @@
                         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                         </svg>
-                        <span>Tambah Penjualan</span>
+                        <span>
+                            {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Input Faktur Penjualan' : 'Input Transaksi Penjualan' }}
+                        </span>
                     </a>
                 </div>
             </div>
@@ -101,7 +103,7 @@
                     {{-- Tombol Pintas Filter --}}
                     <div class="flex items-center gap-2 flex-wrap">
                         <span class="text-xs text-gray-400">Pintas:</span>
-                        <a href="{{ route('penjualan.index') }}"
+                        <a href="{{ route('penjualan.index', ['periode' => date('Y-m')]) }}"
                             class="rounded-lg px-3 py-1.5 text-xs font-semibold transition border {{ empty($tampilkanSemua) && $periode === date('Y-m') ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100' }}">
                             Bulan Ini
                         </a>
@@ -123,13 +125,13 @@
                             </svg>
                         </div>
                         <h3 class="mt-4 font-semibold text-gray-900">
-                            Tidak Ada Data Penjualan
+                            {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Tidak Ada Data Faktur Penjualan' : 'Tidak Ada Riwayat Transaksi' }}
                         </h3>
                         <p class="mt-1 text-sm text-gray-500">
                             @if (!empty($periode))
-                                Belum ada faktur penjualan tercatat pada periode <span class="font-semibold text-gray-700">{{ \Carbon\Carbon::parse($periode . '-01')->translatedFormat('F Y') }}</span>.
+                                Belum ada {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'faktur penjualan' : 'transaksi penjualan' }} tercatat pada periode <span class="font-semibold text-gray-700">{{ \Carbon\Carbon::parse($periode . '-01')->translatedFormat('F Y') }}</span>.
                             @else
-                                Belum ada faktur penjualan yang tersimpan di sistem.
+                                Belum ada {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'faktur penjualan' : 'transaksi penjualan' }} yang tersimpan di sistem.
                             @endif
                         </p>
                         <div class="mt-4 flex justify-center gap-3">
@@ -139,7 +141,7 @@
                             </a>
                             <a href="{{ route('penjualan.create') }}"
                                 class="rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700">
-                                Tambah Penjualan Baru
+                                {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Input Faktur Penjualan Baru' : 'Input Transaksi Penjualan Baru' }}
                             </a>
                         </div>
                     </div>
@@ -152,7 +154,7 @@
                                         Nomor
                                     </th>
                                     <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Tanggal
+                                        {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Tanggal Faktur' : 'Tanggal Transaksi' }}
                                     </th>
                                     <th class="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Outlet
@@ -161,7 +163,7 @@
                                         Produk
                                     </th>
                                     <th class="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-gray-600">
-                                        Total Harga
+                                        {{ in_array(strtolower($namaRole ?? auth()->user()->role->nama_role ?? ''), ['admin']) ? 'Total Nilai Faktur' : 'Total Transaksi' }}
                                     </th>
                                     <th class="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
                                         Aksi
@@ -180,7 +182,20 @@
                                         </td>
                                         <td class="px-6 py-4 text-sm text-gray-900 font-semibold">
                                             {{ $item->outlet->nama_outlet ?? '-' }}
-                                            @if ($item->karyawan)
+                                            @if ($item->bcKaryawan || $item->spgKaryawan)
+                                                <div class="mt-1 flex flex-wrap gap-1 text-[11px] font-normal">
+                                                    @if ($item->bcKaryawan)
+                                                        <span class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-blue-700 border border-blue-200">
+                                                            <strong class="font-bold">BC:</strong> {{ $item->bcKaryawan->nama_karyawan }}
+                                                        </span>
+                                                    @endif
+                                                    @if ($item->spgKaryawan)
+                                                        <span class="inline-flex items-center gap-1 rounded bg-pink-50 px-2 py-0.5 text-pink-700 border border-pink-200">
+                                                            <strong class="font-bold">SPG:</strong> {{ $item->spgKaryawan->nama_karyawan }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            @elseif ($item->karyawan)
                                                 <span class="block text-xs font-normal text-gray-400">
                                                     PIC: {{ $item->karyawan->nama_karyawan }}
                                                 </span>

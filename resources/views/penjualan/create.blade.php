@@ -1,43 +1,51 @@
 @extends('layouts.app')
 
-@section('title', 'Tambah Penjualan')
+@section('title',
+    in_array(strtolower($namaRole ?? ''), ['admin'])
+    ? 'Input Faktur Penjualan'
+    : 'Input Transaksi
+    Penjualan')
 
 @section('content')
     <div class="min-h-screen bg-gray-100 px-4 py-8 sm:px-6 lg:px-8">
         <div class="mx-auto max-w-5xl space-y-6">
             <div class="flex items-center justify-between">
-                <a href="{{ route('penjualan.index') }}" class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-green-700">
+                <a href="{{ route('penjualan.index') }}"
+                    class="inline-flex items-center text-sm font-medium text-gray-600 hover:text-green-700">
                     <svg class="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
-                    Kembali ke Data Penjualan
+                    Kembali ke
+                    {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Data Faktur Penjualan' : 'Riwayat Transaksi' }}
                 </a>
 
                 {{-- Badge Role Pengguna --}}
-                <div class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold
-                    @if (in_array(strtolower($namaRole ?? ''), ['spg', 'sales promotion girl']))
-                        bg-pink-100 text-pink-800 border border-pink-200
+                <div
+                    class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold
+                    @if (in_array(strtolower($namaRole ?? ''), ['spg', 'sales promotion girl'])) bg-pink-100 text-pink-800 border border-pink-200
                     @elseif (in_array(strtolower($namaRole ?? ''), ['bc', 'beauty consultant']))
                         bg-purple-100 text-purple-800 border border-purple-200
                     @elseif (in_array(strtolower($namaRole ?? ''), ['supervisor']))
                         bg-blue-100 text-blue-800 border border-blue-200
                     @else
-                        bg-gray-100 text-gray-800 border border-gray-200
-                    @endif">
-                    <span class="h-2 w-2 rounded-full
+                        bg-emerald-100 text-emerald-800 border border-emerald-200 @endif">
+                    <span
+                        class="h-2 w-2 rounded-full
                         @if (in_array(strtolower($namaRole ?? ''), ['spg', 'sales promotion girl'])) bg-pink-500
                         @elseif (in_array(strtolower($namaRole ?? ''), ['bc', 'beauty consultant'])) bg-purple-500
                         @elseif (in_array(strtolower($namaRole ?? ''), ['supervisor'])) bg-blue-500
-                        @else bg-gray-500 @endif"></span>
+                        @else bg-emerald-600 @endif"></span>
                     <span>Role: {{ auth()->user()->role->nama_role ?? ucfirst($namaRole ?? 'User') }}</span>
                 </div>
             </div>
 
             <div class="mb-4">
-                <h1 class="text-3xl font-bold text-gray-900">Input Faktur Penjualan</h1>
-                <p class="mt-1 text-sm text-gray-500">
-                    Pilih outlet bertugas dan produk untuk mencatat faktur penjualan baru. Sisa stok dihitung otomatis berdasarkan faktur penjualan yang tercatat.
-                </p>
+                @if (in_array(strtolower($namaRole ?? ''), ['admin']))
+                    <h1 class="text-3xl font-bold text-gray-900">Input Faktur Penjualan</h1>
+                @else
+                    <h1 class="text-3xl font-bold text-gray-900">Input Transaksi Penjualan</h1>
+                @endif
             </div>
 
             <form action="{{ route('penjualan.store') }}" method="POST" id="form-penjualan" class="space-y-6">
@@ -56,58 +64,40 @@
                 @endif
 
                 {{-- Alert Peringatan Melebihi Stok Real-Time --}}
-                <div id="alert-stok-kurang" class="hidden rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
+                <div id="alert-stok-kurang"
+                    class="hidden rounded-xl border border-red-300 bg-red-50 p-4 text-sm text-red-800 shadow-sm">
                     <div class="flex items-center gap-2">
                         <svg class="h-5 w-5 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
                         <span id="pesan-stok-kurang" class="font-medium"></span>
                     </div>
                 </div>
 
                 {{-- Card 1: Informasi Utama --}}
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-3 gap-2">
-                        <h2 class="text-lg font-semibold text-gray-900">Informasi Utama</h2>
-                        @if (in_array(strtolower($namaRole ?? ''), ['spg', 'sales promotion girl']))
-                            <span class="inline-flex items-center gap-1.5 text-xs text-pink-700 bg-pink-50 border border-pink-200 px-2.5 py-1 rounded-lg">
-                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                                </svg>
-                                <span>Mode SPG: Menampilkan outlet tempat Anda bertugas hari ini.</span>
-                            </span>
-                        @elseif (in_array(strtolower($namaRole ?? ''), ['bc', 'beauty consultant']))
-                            <span class="inline-flex items-center gap-1.5 text-xs text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-1 rounded-lg">
-                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                                <span>Mode BC: Anda dapat memilih outlet counter yang Anda tangani.</span>
-                            </span>
-                        @elseif (in_array(strtolower($namaRole ?? ''), ['supervisor']))
-                            <span class="inline-flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-1 rounded-lg">
-                                <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                </svg>
-                                <span>Mode Supervisor: Akses supervisi stok & penjualan seluruh outlet.</span>
-                            </span>
-                        @endif
-                    </div>
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        {{-- 1. Tanggal Faktur / Transaksi --}}
                         <div>
                             <label for="tanggal_penjualan" class="block text-sm font-medium text-gray-700 mb-1">
-                                Tanggal Penjualan <span class="text-red-600">*</span>
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Tanggal Faktur' : 'Tanggal Transaksi' }}
+                                <span class="text-red-600">*</span>
                             </label>
                             <input type="date" id="tanggal_penjualan" name="tanggal_penjualan"
                                 value="{{ old('tanggal_penjualan', date('Y-m-d')) }}"
                                 class="w-full rounded-xl border border-gray-300 px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-600">
                         </div>
 
+                        {{-- 2. Pilih Outlet --}}
                         <div>
                             <label for="outlet_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                Pilih Outlet Tempat Bertugas
-                                @if (!empty($outletTugasKhusus))
-                                    <span class="ml-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Pilih Outlet' : 'Outlet Tempat Bertugas' }}
+                                @if (!empty($outletTugasKhusus) && !in_array(strtolower($namaRole ?? ''), ['admin']))
+                                    <span
+                                        class="ml-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                                         Outlet Tugas Anda
                                     </span>
                                 @endif
@@ -116,19 +106,92 @@
                             <select name="outlet_id" id="outlet_id" required onchange="gantiOutlet()"
                                 class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
                                 @if ($outlet->count() > 1 && !old('outlet_id') && empty($defaultOutletId))
-                                    <option value="">--- Pilih Outlet Tempat Bertugas ---</option>
+                                    <option value="">--- Pilih Outlet ---</option>
                                 @endif
 
                                 @foreach ($outlet as $out)
                                     <option value="{{ $out->outlet_id }}"
                                         data-alamat="{{ $out->alamat_outlet ?? 'Alamat Tidak Tersedia' }}"
-                                        data-wilayah="{{ $out->wilayah_id }}"
-                                        @selected((string) old('outlet_id', $defaultOutletId) === (string) $out->outlet_id)>
+                                        data-wilayah="{{ $out->wilayah_id }}" @selected((string) old('outlet_id', $defaultOutletId) === (string) $out->outlet_id)>
                                         {{ $out->nama_outlet }}
                                         ({{ $out->wilayah->nama_wilayah ?? 'Wilayah ' . $out->wilayah_id }})
                                     </option>
                                 @endforeach
                             </select>
+                        </div>
+
+                        {{-- 3. Petugas BC (Beauty Consultant) --}}
+                        <div>
+                            <label for="bc_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Petugas BC (Beauty Consultant)
+                                @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                    <span class="text-xs text-gray-400 font-normal">(Maks. 1 BC)</span>
+                                @endif
+                            </label>
+                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                <select name="bc_karyawan_id" id="bc_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih BC (Opsional) --</option>
+                                    @foreach ($bcList as $bc)
+                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id') == $bc->karyawan_id)>
+                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @elseif (in_array(strtolower($namaRole ?? ''), ['beauty consultant', 'bc']))
+                                <div class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
+                                    <span class="font-bold text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded">BC</span>
+                                    <span class="font-medium truncate">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</span>
+                                </div>
+                                <input type="hidden" name="bc_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
+                            @else
+                                <select name="bc_karyawan_id" id="bc_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih BC Pendamping --</option>
+                                    @foreach ($bcList as $bc)
+                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id') == $bc->karyawan_id)>
+                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
+                        </div>
+
+                        {{-- 4. Petugas SPG (Sales Promotion Girl) --}}
+                        <div>
+                            <label for="spg_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                Petugas SPG (Sales Promotion Girl)
+                                @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                    <span class="text-xs text-gray-400 font-normal">(Maks. 1 SPG)</span>
+                                @endif
+                            </label>
+                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                                <select name="spg_karyawan_id" id="spg_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih SPG (Opsional) --</option>
+                                    @foreach ($spgList as $spg)
+                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id') == $spg->karyawan_id)>
+                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @elseif (in_array(strtolower($namaRole ?? ''), ['sales promotion girl', 'spg']))
+                                <div class="flex items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-sm text-pink-900">
+                                    <span class="font-bold text-xs bg-pink-200 text-pink-800 px-1.5 py-0.5 rounded">SPG</span>
+                                    <span class="font-medium truncate">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</span>
+                                </div>
+                                <input type="hidden" name="spg_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
+                            @else
+                                <select name="spg_karyawan_id" id="spg_karyawan_id"
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih SPG Pendamping --</option>
+                                    @foreach ($spgList as $spg)
+                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id') == $spg->karyawan_id)>
+                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
                     </div>
 
@@ -136,8 +199,10 @@
                     <div id="box-alamat" class="hidden rounded-xl bg-gray-50 p-4 border border-gray-200">
                         <div class="flex items-center gap-2 text-gray-500">
                             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                             <span class="text-xs font-semibold uppercase tracking-wider">Alamat Outlet:</span>
                         </div>
@@ -147,69 +212,86 @@
                     </div>
                 </div>
 
-                {{-- Card 2: Status Stok & Rekap Penjualan Outlet Saat Ini --}}
-                <div class="rounded-2xl border border-emerald-100 bg-white shadow-sm overflow-hidden">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 bg-emerald-50/60 px-6 py-4 gap-2">
-                        <div class="flex items-center gap-2">
-                            <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow">
-                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                </svg>
-                            </span>
-                            <div>
-                                <h2 class="text-base font-semibold text-gray-900">
-                                    Status Stok Produk di Outlet Terpilih
-                                </h2>
-                                <p class="text-xs text-gray-500">
-                                    Dihitung berdasarkan Faktur Penjualan: <span class="font-semibold text-emerald-800">Sisa Stok = Stok Masuk - Total Terjual</span>
-                                </p>
+                {{-- Card 2: Status Stok & Rekap Penjualan Outlet Saat Ini (Hanya untuk BC, SPG, Supervisor) --}}
+                @if (!in_array(strtolower($namaRole ?? ''), ['admin']))
+                    <div class="rounded-2xl border border-emerald-100 bg-white shadow-sm overflow-hidden">
+                        <div
+                            class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 bg-emerald-50/60 px-6 py-4 gap-2">
+                            <div class="flex items-center gap-2">
+                                <span
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600 text-white shadow">
+                                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                    </svg>
+                                </span>
+                                <div>
+                                    <h2 class="text-base font-semibold text-gray-900">
+                                        Status Stok Produk di Outlet Terpilih
+                                    </h2>
+                                    <p class="text-xs text-gray-500">
+                                        Dihitung berdasarkan Faktur Penjualan: <span
+                                            class="font-semibold text-emerald-800">Sisa Stok = Stok Masuk - Total
+                                            Terjual</span>
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <span id="label-loading-stok"
+                                    class="hidden text-xs text-emerald-600 animate-pulse font-medium items-center gap-1.5">
+                                    <svg class="h-3.5 w-3.5 inline animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10"
+                                            stroke="currentColor" stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                    </svg>
+                                    <span>Mengambil data stok...</span>
+                                </span>
+                                <button type="button" onclick="toggleTabelStok()"
+                                    class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 shadow-sm transition">
+                                    <svg id="btn-toggle-stok-icon" class="h-4 w-4 shrink-0" fill="none"
+                                        viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <span id="btn-toggle-stok-text">Lihat Tabel Stok</span>
+                                </button>
                             </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <span id="label-loading-stok" class="hidden text-xs text-emerald-600 animate-pulse font-medium items-center gap-1.5">
-                                <svg class="h-3.5 w-3.5 inline animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                                </svg>
-                                <span>Mengambil data stok...</span>
-                            </span>
-                            <button type="button" onclick="toggleTabelStok()" class="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 shadow-sm transition">
-                                <svg id="btn-toggle-stok-icon" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                <span id="btn-toggle-stok-text">Lihat Tabel Stok</span>
-                            </button>
+                        <div id="container-tabel-stok" class="hidden p-6 border-t border-gray-100">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="border-b border-gray-200 text-gray-500 uppercase bg-gray-50/70">
+                                            <th class="py-2.5 px-3">Nama Produk</th>
+                                            <th class="py-2.5 px-3 text-center">Stok Masuk</th>
+                                            <th class="py-2.5 px-3 text-center">Terjual (Faktur)</th>
+                                            <th class="py-2.5 px-3 text-center font-bold text-gray-800">Sisa Stok</th>
+                                            <th class="py-2.5 px-3 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbody-stok-outlet" class="divide-y divide-gray-100">
+                                        {{-- Diisi secara dinamis oleh JavaScript --}}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
+                @endif
 
-                    <div id="container-tabel-stok" class="hidden p-6 border-t border-gray-100">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead>
-                                    <tr class="border-b border-gray-200 text-gray-500 uppercase bg-gray-50/70">
-                                        <th class="py-2.5 px-3">Nama Produk</th>
-                                        <th class="py-2.5 px-3 text-center">Stok Masuk</th>
-                                        <th class="py-2.5 px-3 text-center">Terjual (Faktur)</th>
-                                        <th class="py-2.5 px-3 text-center font-bold text-gray-800">Sisa Stok</th>
-                                        <th class="py-2.5 px-3 text-center">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tbody-stok-outlet" class="divide-y divide-gray-100">
-                                    {{-- Diisi secara dinamis oleh JavaScript --}}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Card 3: Rincian Produk Faktur Penjualan --}}
+                {{-- Card 3: Rincian Produk --}}
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
                     <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                         <div>
-                            <h2 class="text-lg font-semibold text-gray-900">Rincian Faktur Penjualan</h2>
-                            <p class="text-xs text-gray-500">Jumlah kuantitas dibatasi maksimal sesuai sisa stok yang tersedia di outlet.</p>
+                            <h2 class="text-lg font-semibold text-gray-900">
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Rincian Faktur Penjualan' : 'Rincian Transaksi Penjualan' }}
+                            </h2>
+                            <p class="text-xs text-gray-500">
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Pilih produk dan tentukan kuantitas penjualan faktur.' : 'Kuantitas produk transaksi dibatasi sesuai sisa stok outlet.' }}
+                            </p>
                         </div>
                         <button type="button" onclick="tambahBarisProduk()"
                             class="rounded-xl bg-emerald-50 px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 border border-emerald-200 transition">
@@ -221,7 +303,9 @@
                         <table class="min-w-[650px] w-full text-left border-collapse" id="tabel_produk">
                             <thead>
                                 <tr class="border-b border-gray-200 text-xs uppercase text-gray-500">
-                                    <th class="py-2 px-2 w-5/12">Produk & Sisa Stok</th>
+                                    <th class="py-2 px-2 w-5/12">
+                                        {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Produk' : 'Produk & Sisa Stok' }}
+                                    </th>
                                     <th class="py-2 px-2 w-2/12">Jumlah (Pcs)</th>
                                     <th class="py-2 px-2 w-2/12">Harga Satuan</th>
                                     <th class="py-2 px-2 w-2/12 text-right">Subtotal</th>
@@ -246,7 +330,11 @@
                                         <input type="number" name="jumlah[]" min="1" value="1" required
                                             oninput="hitungSubtotal(this)"
                                             class="jumlah-input w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                                        <span class="info-stok-baris block text-[11px] text-gray-500 mt-1 font-medium">Sisa: -</span>
+                                        @if (!in_array(strtolower($namaRole ?? ''), ['admin']))
+                                            <span
+                                                class="info-stok-baris block text-[11px] text-gray-500 mt-1 font-medium">Sisa:
+                                                -</span>
+                                        @endif
                                     </td>
                                     <td class="py-3 px-2">
                                         <input type="number" name="harga_satuan[]" readonly value="0"
@@ -267,7 +355,9 @@
                     {{-- Subtotal & Grand Total --}}
                     <div class="flex justify-end pt-4 border-t border-gray-100">
                         <div class="text-right">
-                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Nilai Faktur</span>
+                            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Total Nilai Faktur' : 'Total Transaksi' }}
+                            </span>
                             <div id="grand_total" class="text-2xl font-bold text-emerald-600">Rp 0</div>
                             <input type="hidden" name="total_harga" id="input_total_harga" value="0">
                         </div>
@@ -280,7 +370,7 @@
                         </a>
                         <button type="submit" id="btn-submit-penjualan"
                             class="rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 shadow-md transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            Simpan Faktur Penjualan
+                            {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Simpan Faktur Penjualan' : 'Simpan Transaksi Penjualan' }}
                         </button>
                     </div>
                 </div>
@@ -289,33 +379,38 @@
     </div>
 
     <script>
+        const isRoleAdmin = @json(in_array(strtolower($namaRole ?? ''), ['admin']));
         const daftarHarga = @json($daftarHarga);
         const daftarOutlet = @json(
             $outlet->map(function ($item) {
-                return [
-                    'outlet_id' => $item->outlet_id,
-                    'wilayah_id' => $item->wilayah_id,
-                ];
-            })->values());
+                    return [
+                        'outlet_id' => $item->outlet_id,
+                        'wilayah_id' => $item->wilayah_id,
+                    ];
+                })->values());
 
-        // Inisialisasi data stok awal dari controller untuk outlet default
-        let currentStokMap = @json($initialStok ?? []);
+        // Inisialisasi data stok awal dari controller untuk outlet default (jika bukan admin)
+        let currentStokMap = isRoleAdmin ? {} : @json($initialStok ?? []);
 
         function toggleTabelStok() {
             const container = document.getElementById('container-tabel-stok');
             const btnText = document.getElementById('btn-toggle-stok-text');
             const btnIcon = document.getElementById('btn-toggle-stok-icon');
+            if (!container) return;
+
             if (container.classList.contains('hidden')) {
                 container.classList.remove('hidden');
-                btnText.textContent = 'Sembunyikan Tabel';
+                if (btnText) btnText.textContent = 'Sembunyikan Tabel';
                 if (btnIcon) {
-                    btnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+                    btnIcon.innerHTML =
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
                 }
             } else {
                 container.classList.add('hidden');
-                btnText.textContent = 'Lihat Tabel Stok';
+                if (btnText) btnText.textContent = 'Lihat Tabel Stok';
                 if (btnIcon) {
-                    btnIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
+                    btnIcon.innerHTML =
+                        '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />';
                 }
             }
         }
@@ -366,25 +461,31 @@
             return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
 
-        // Render Tabel Ringkasan Stok Outlet
+        // Render Tabel Ringkasan Stok Outlet (hanya untuk BC, SPG, Supervisor)
         function renderTabelStok() {
+            if (isRoleAdmin) return;
             const tbody = document.getElementById('tbody-stok-outlet');
+            if (!tbody) return;
             tbody.innerHTML = '';
 
             const listProduk = Object.values(currentStokMap);
             if (listProduk.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-500">Pilih outlet untuk menampilkan stok</td></tr>`;
+                tbody.innerHTML =
+                    `<tr><td colspan="5" class="py-4 text-center text-gray-500">Pilih outlet untuk menampilkan stok</td></tr>`;
                 return;
             }
 
             listProduk.forEach(item => {
                 let badgeStatus = '';
                 if (item.status === 'habis') {
-                    badgeStatus = '<span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">Habis (0 pcs)</span>';
+                    badgeStatus =
+                        '<span class="inline-flex rounded-full bg-red-100 px-2 py-0.5 text-[11px] font-semibold text-red-700">Habis (0 pcs)</span>';
                 } else if (item.status === 'menipis') {
-                    badgeStatus = `<span class="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-800">Menipis (${item.sisa_stok} pcs)</span>`;
+                    badgeStatus =
+                        `<span class="inline-flex rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-semibold text-yellow-800">Menipis (${item.sisa_stok} pcs)</span>`;
                 } else {
-                    badgeStatus = `<span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Tersedia (${item.sisa_stok} pcs)</span>`;
+                    badgeStatus =
+                        `<span class="inline-flex rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Tersedia (${item.sisa_stok} pcs)</span>`;
                 }
 
                 const tr = document.createElement('tr');
@@ -413,12 +514,19 @@
 
             if (!outletId) {
                 currentStokMap = {};
-                renderTabelStok();
+                if (!isRoleAdmin) renderTabelStok();
                 perbaruiDropdownProdukDanStok();
                 return;
             }
 
-            loadingLabel.classList.remove('hidden');
+            // Jika role Admin, tidak perlu load data stok outlet
+            if (isRoleAdmin) {
+                currentStokMap = {};
+                perbaruiDropdownProdukDanStok();
+                return;
+            }
+
+            if (loadingLabel) loadingLabel.classList.remove('hidden');
 
             try {
                 const response = await fetch(`/penjualan/stok-outlet/${outletId}`);
@@ -431,7 +539,7 @@
             } catch (err) {
                 console.error('Error saat fetch stok:', err);
             } finally {
-                loadingLabel.classList.add('hidden');
+                if (loadingLabel) loadingLabel.classList.add('hidden');
                 renderTabelStok();
                 perbaruiDropdownProdukDanStok();
             }
@@ -468,7 +576,7 @@
                     const sisa = stokItem ? Number(stokItem.sisa_stok) : 0;
 
                     let labelStok = '';
-                    if (stokItem) {
+                    if (!isRoleAdmin && stokItem) {
                         if (sisa <= 0) {
                             labelStok = ' [STOK HABIS (0 pcs)]';
                             opt.disabled = true;
@@ -485,8 +593,8 @@
                     }
                 });
 
-                // Jika produk terpilih sebelumnya ternyata stoknya 0, reset
-                if (currentVal && currentStokMap[currentVal] && currentStokMap[currentVal].sisa_stok <= 0) {
+                // Jika produk terpilih sebelumnya ternyata stoknya 0, reset (hanya untuk non-admin)
+                if (!isRoleAdmin && currentVal && currentStokMap[currentVal] && currentStokMap[currentVal].sisa_stok <= 0) {
                     sel.value = '';
                 }
             });
@@ -512,20 +620,27 @@
             const wilayahId = ambilWilayahOutlet();
             const selectedOpt = selectProduk.options[selectProduk.selectedIndex];
 
-            // Tentukan sisa stok untuk produk ini
-            let sisaStok = 0;
-            if (produkId && currentStokMap[produkId]) {
-                sisaStok = Number(currentStokMap[produkId].sisa_stok || 0);
-                inputJumlah.max = sisaStok;
-                if (sisaStok <= 0) {
-                    infoStokBaris.innerHTML = `<span class="text-red-600 font-bold">Stok Habis (0 pcs)</span>`;
-                } else if (sisaStok <= 5) {
-                    infoStokBaris.innerHTML = `Sisa: <span class="text-yellow-600 font-bold">${sisaStok} pcs (Menipis)</span>`;
-                } else {
-                    infoStokBaris.innerHTML = `Sisa: <span class="text-emerald-600 font-bold">${sisaStok} pcs</span>`;
+            // Tentukan sisa stok untuk produk ini (hanya untuk non-admin: SPG, BC, Supervisor)
+            if (!isRoleAdmin) {
+                let sisaStok = 0;
+                if (produkId && currentStokMap[produkId]) {
+                    sisaStok = Number(currentStokMap[produkId].sisa_stok || 0);
+                    inputJumlah.max = sisaStok;
+                    if (infoStokBaris) {
+                        if (sisaStok <= 0) {
+                            infoStokBaris.innerHTML = `<span class="text-red-600 font-bold">Stok Habis (0 pcs)</span>`;
+                        } else if (sisaStok <= 5) {
+                            infoStokBaris.innerHTML =
+                                `Sisa: <span class="text-yellow-600 font-bold">${sisaStok} pcs (Menipis)</span>`;
+                        } else {
+                            infoStokBaris.innerHTML = `Sisa: <span class="text-emerald-600 font-bold">${sisaStok} pcs</span>`;
+                        }
+                    }
+                } else if (infoStokBaris) {
+                    infoStokBaris.textContent = 'Sisa: -';
+                    inputJumlah.removeAttribute('max');
                 }
             } else {
-                infoStokBaris.textContent = 'Sisa: -';
                 inputJumlah.removeAttribute('max');
             }
 
@@ -560,8 +675,16 @@
             hitungHargaTotal();
         }
 
-        // Validasi Apakah Total Kuantitas per Produk Melebihi Sisa Stok di Outlet
+        // Validasi Apakah Total Kuantitas per Produk Melebihi Sisa Stok di Outlet (hanya untuk SPG, BC, Supervisor)
         function validasiSemuaBaris() {
+            if (isRoleAdmin) {
+                const alertEl = document.getElementById('alert-stok-kurang');
+                if (alertEl) alertEl.classList.add('hidden');
+                const submitBtn = document.getElementById('btn-submit-penjualan');
+                if (submitBtn) submitBtn.disabled = false;
+                return;
+            }
+
             const akumulasi = {};
             let adaKelebihan = false;
             let pesanError = '';
@@ -589,7 +712,8 @@
                     if (totalMinta > sisa || sisa <= 0) {
                         adaKelebihan = true;
                         inputJumlah.classList.add('border-red-500', 'bg-red-50');
-                        pesanError = `Kuantitas untuk "${currentStokMap[pId].nama_produk}" (${totalMinta} pcs) melampaui sisa stok (${sisa} pcs).`;
+                        pesanError =
+                            `Kuantitas untuk "${currentStokMap[pId].nama_produk}" (${totalMinta} pcs) melampaui sisa stok (${sisa} pcs).`;
                     } else {
                         inputJumlah.classList.remove('border-red-500', 'bg-red-50');
                     }
@@ -601,12 +725,12 @@
             const submitBtn = document.getElementById('btn-submit-penjualan');
 
             if (adaKelebihan) {
-                pesanEl.textContent = pesanError;
-                alertEl.classList.remove('hidden');
-                submitBtn.disabled = true;
+                if (pesanEl) pesanEl.textContent = pesanError;
+                if (alertEl) alertEl.classList.remove('hidden');
+                if (submitBtn) submitBtn.disabled = true;
             } else {
-                alertEl.classList.add('hidden');
-                submitBtn.disabled = false;
+                if (alertEl) alertEl.classList.add('hidden');
+                if (submitBtn) submitBtn.disabled = false;
             }
         }
 
@@ -648,7 +772,10 @@
             inputJumlah.value = 1;
             inputJumlah.classList.remove('border-red-500', 'bg-red-50');
             barisBaru.querySelector('.harga-input').value = 0;
-            barisBaru.querySelector('.info-stok-baris').textContent = 'Sisa: -';
+            const infoStok = barisBaru.querySelector('.info-stok-baris');
+            if (infoStok) {
+                infoStok.textContent = 'Sisa: -';
+            }
 
             const subtotalEl = barisBaru.querySelector('.subtotal-text');
             subtotalEl.textContent = RupiahFormat(0);
@@ -676,7 +803,9 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             updateAlamatOutlet();
-            renderTabelStok();
+            if (!isRoleAdmin) {
+                renderTabelStok();
+            }
             perbaruiDropdownProdukDanStok();
 
             document.getElementById('tanggal_penjualan')

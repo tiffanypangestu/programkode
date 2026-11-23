@@ -139,6 +139,14 @@ class SpgController extends Controller
                 'nama_spg' => $validated['nama_spg'],
                 'nomor_telepon' => $validated['nomor_telepon'] ?? null,
             ]);
+
+            $karyawan = Karyawan::where('user_id', $spg->user_id)->first();
+            if ($karyawan) {
+                $karyawan->update([
+                    'nama_karyawan' => $validated['nama_spg'],
+                    'nomor_telepon' => $validated['nomor_telepon'] ?? null,
+                ]);
+            }
         });
 
         return redirect()->route('spg.index')->with('success', 'Data SPG berhasil diupdate!');
