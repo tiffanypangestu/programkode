@@ -185,12 +185,14 @@
                                             @if ($item->bcKaryawan || $item->spgKaryawan)
                                                 <div class="mt-1 flex flex-wrap gap-1 text-[11px] font-normal">
                                                     @if ($item->bcKaryawan)
-                                                        <span class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-blue-700 border border-blue-200">
+                                                        <span class="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-0.5 text-blue-700 border border-blue-200"
+                                                            title="Terhubung ke Akun Email: {{ $item->bcKaryawan->user->email ?? '-' }}">
                                                             <strong class="font-bold">BC:</strong> {{ $item->bcKaryawan->nama_karyawan }}
                                                         </span>
                                                     @endif
                                                     @if ($item->spgKaryawan)
-                                                        <span class="inline-flex items-center gap-1 rounded bg-pink-50 px-2 py-0.5 text-pink-700 border border-pink-200">
+                                                        <span class="inline-flex items-center gap-1 rounded bg-pink-50 px-2 py-0.5 text-pink-700 border border-pink-200"
+                                                            title="Terhubung ke Akun Email: {{ $item->spgKaryawan->user->email ?? '-' }}">
                                                             <strong class="font-bold">SPG:</strong> {{ $item->spgKaryawan->nama_karyawan }}
                                                         </span>
                                                     @endif

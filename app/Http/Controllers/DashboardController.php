@@ -10,6 +10,7 @@ use App\Models\Transaksi;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -44,34 +45,56 @@ class DashboardController extends Controller
             $namaRole = strtolower($user->role?->nama_role ?? '');
             $karyawan = $user->karyawan;
 
-            // 1. SPG: Hanya mengakses data transaksi dalam 1 outlet penugasan
+            // 1. SPG: Hanya mengakses data transaksi dalam outlet penugasan atau yang ditugaskan kepadanya
             if (in_array($namaRole, ['sales promotion girl', 'spg'])) {
                 $outletId = $karyawan?->outlets()->value('outlet.outlet_id');
                 if ($outletId) {
-                    $query->where('penjualan.outlet_id', $outletId);
+                    $query->where(function ($q) use ($outletId, $karyawan) {
+                        $q->where('penjualan.outlet_id', $outletId)
+                            ->orWhere('penjualan.spg_karyawan_id', $karyawan?->karyawan_id)
+                            ->orWhere('penjualan.karyawan_id', $karyawan?->karyawan_id);
+                    });
 
                     $spgModel = DB::table('spg')->where('user_id', $user->user_id)->first();
                     $tanggalMasuk = $spgModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
                     if ($tanggalMasuk) {
-                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                        $query->where(function ($q) use ($tanggalMasuk, $karyawan) {
+                            $q->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk)
+                                ->orWhere('penjualan.spg_karyawan_id', $karyawan?->karyawan_id)
+                                ->orWhere('penjualan.karyawan_id', $karyawan?->karyawan_id);
+                        });
                     }
                 } elseif ($karyawan) {
-                    $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
+                    $query->where(function ($q) use ($karyawan) {
+                        $q->where('penjualan.spg_karyawan_id', $karyawan->karyawan_id)
+                            ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                    });
                 }
             }
-            // 2. BC: Hanya mengakses data transaksi di beberapa outlet tempat bertugas
+            // 2. BC: Hanya mengakses data transaksi di outlet tempat bertugas atau yang ditugaskan kepadanya
             elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
                 if ($karyawan && $karyawan->outlets()->exists()) {
                     $outletIds = $karyawan->outlets()->pluck('outlet.outlet_id')->all();
-                    $query->whereIn('penjualan.outlet_id', $outletIds);
+                    $query->where(function ($q) use ($outletIds, $karyawan) {
+                        $q->whereIn('penjualan.outlet_id', $outletIds)
+                            ->orWhere('penjualan.bc_karyawan_id', $karyawan->karyawan_id)
+                            ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                    });
 
                     $bcModel = DB::table('bc')->where('user_id', $user->user_id)->first();
                     $tanggalMasuk = $bcModel?->tanggal_masuk ?? $karyawan?->created_at?->toDateString();
                     if ($tanggalMasuk) {
-                        $query->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk);
+                        $query->where(function ($q) use ($tanggalMasuk, $karyawan) {
+                            $q->whereDate('penjualan.tanggal_penjualan', '>=', $tanggalMasuk)
+                                ->orWhere('penjualan.bc_karyawan_id', $karyawan->karyawan_id)
+                                ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                        });
                     }
                 } elseif ($karyawan) {
-                    $query->where('penjualan.karyawan_id', $karyawan->karyawan_id);
+                    $query->where(function ($q) use ($karyawan) {
+                        $q->where('penjualan.bc_karyawan_id', $karyawan->karyawan_id)
+                            ->orWhere('penjualan.karyawan_id', $karyawan->karyawan_id);
+                    });
                 } else {
                     $query->whereRaw('1 = 0');
                 }
@@ -218,24 +241,37 @@ class DashboardController extends Controller
             return $petugasList->unique()->implode(', ');
         });
 
-        // 8. Rekap data penjualan per outlet periode ini
-        $outletsQuery = (clone $penjualanBulanIni)
+        // Rekap data penjualan per outlet periode ini (tanpa filter, agar identik dengan data yang masuk ke K-Means)
+        $outletsDataRaw = (clone $penjualanBulanIni)
             ->join('outlet', 'outlet.outlet_id', '=', 'penjualan.outlet_id')
             ->leftJoin('wilayah', 'wilayah.wilayah_id', '=', 'outlet.wilayah_id')
             ->selectRaw('penjualan.outlet_id, outlet.nama_outlet, outlet.tipe_outlet, wilayah.nama_wilayah, SUM(penjualan.total_harga) as omzet, COUNT(penjualan.penjualan_id) as frekuensi')
-            ->groupBy('penjualan.outlet_id', 'outlet.nama_outlet', 'outlet.tipe_outlet', 'wilayah.nama_wilayah');
+            ->groupBy('penjualan.outlet_id', 'outlet.nama_outlet', 'outlet.tipe_outlet', 'wilayah.nama_wilayah')
+            ->get();
+
+        // Hasil K-Means asli dari sistem (FastAPI) - sama dengan halaman Analisis Performa.
+        // Di-cache sebentar supaya membuka dashboard tidak memicu proses clustering berulang.
+        $userId = Auth::id() ?? 0;
+        $hasilKmeans = Cache::remember("dashboard.kmeans.{$selectedPeriode}.{$userId}", 300, function () use ($selectedPeriode) {
+            return app(AnalisisPerformaController::class)->ambilHasilClustering($selectedPeriode);
+        });
+        if (! $hasilKmeans) {
+            Cache::forget("dashboard.kmeans.{$selectedPeriode}.{$userId}");
+        }
+        $kmeansPerOutlet = collect($hasilKmeans['data']['data'] ?? [])->keyBy('id_outlet');
+        $kmeansTersedia = $kmeansPerOutlet->isNotEmpty();
 
         // filter ketika dipilih di Select Button
         if (! empty($selectedWilayah)) {
-            $outletsQuery->where('wilayah.nama_wilayah', $selectedWilayah);
+            $outletsDataRaw = $outletsDataRaw->where('nama_wilayah', $selectedWilayah);
         }
 
         // filter ketika user input keyword di search
         if (! empty($searchQuery)) {
-            $outletsQuery->where('outlet.nama_outlet', 'like', '%'.$searchQuery.'%');
+            $outletsDataRaw = $outletsDataRaw->filter(fn ($o) => str_contains(strtolower($o->nama_outlet), strtolower($searchQuery)));
         }
 
-        $outletsDataRaw = $outletsQuery->orderByDesc('omzet')->get();
+        $outletsDataRaw = $outletsDataRaw->sortByDesc('omzet')->values();
 
         $totalOutletAktif = $outletsDataRaw->count();
         $totalOmzetBaseline = $totalOmzet > 0 ? $totalOmzet : 1.0;
@@ -243,14 +279,15 @@ class DashboardController extends Controller
         // Cek data analisis K-Means jika sudah pernah dilakukan untuk periode ini
         $analisisInfo = AnalisisPerforma::where('periode_analisis', $selectedPeriode)->first();
 
-        // 9. Susun Peringkat & Kinerja Outlet (Urutan 1 to N berdasarkan performa omzet)
+        // 9. Susun Peringkat & Kinerja Outlet (status performa = hasil K-Means sistem)
         $peringkatOutlet = $outletsDataRaw->values()->map(function ($item, $index) use (
             $totalOmzetBaseline,
             $omzetBulanLaluPerOutlet,
             $jumlahProdukPerOutlet,
             $topProdukPerOutlet,
             $petugasPerOutlet,
-            $totalOutletAktif
+            $kmeansPerOutlet,
+            $kmeansTersedia
         ) {
             $omzetSekarang = (float) $item->omzet;
             $omzetLalu = (float) ($omzetBulanLaluPerOutlet[$item->outlet_id] ?? 0);
@@ -265,28 +302,20 @@ class DashboardController extends Controller
             // Tingkat pencapaian terhadap total penjualan perusahaan (Kontribusi %)
             $kontribusi = ($omzetSekarang / $totalOmzetBaseline) * 100;
 
-            // Pengelompokan
-            $persen_ranking = $totalOutletAktif > 0 ? (($index + 1) / $totalOutletAktif) * 100 : 50;
-            if ($persen_ranking <= 20) {
-                $cluster = 'Cluster 1 (Sangat Tinggi)';
-                $clusterCode = 'C1';
-                $status = 'Sangat Tinggi (Sangat Ramai)';
-                $rekomendasi = 'Pertahankan stok produk unggulan';
-            } elseif ($persen_ranking <= 30) {
-                $cluster = 'Cluster 2 (Ramai)';
-                $clusterCode = 'C2';
-                $status = 'Tinggi (Ramai)';
-                $rekomendasi = 'Tingkatkan penjualan dan berikan diskon 20% untuk produk tertentu';
-            } elseif ($persen_ranking <= 70) {
-                $cluster = 'Cluster 3 (Sedang)';
-                $clusterCode = 'C3';
-                $status = 'Sedang';
-                $rekomendasi = 'Tingkatkan frekuensi promosi & variasi paket produk';
+            // Status performa dari hasil K-Means (bukan dari peringkat omzet)
+            $hasil = $kmeansPerOutlet->get($item->outlet_id);
+            if ($hasil) {
+                $status = trim($hasil['status']);
+                $clusterCode = 'C'.$hasil['cluster'];
+                $cluster = 'Cluster '.$hasil['cluster'].' ('.$status.')';
+                $rekomendasi = $hasil['rekomendasi_promosi'];
             } else {
-                $cluster = 'Cluster 4 (Sepi)';
-                $clusterCode = 'C4';
-                $status = 'Rendah';
-                $rekomendasi = 'Evaluasi kunjungan BC/SPG, diskon khusus, & evaluasi minat pasar';
+                $status = 'Belum dianalisis';
+                $clusterCode = null;
+                $cluster = '-';
+                $rekomendasi = $kmeansTersedia
+                    ? 'Outlet ini tidak termasuk dalam hasil analisis.'
+                    : 'Jalankan Analisis Performa (pastikan FastAPI aktif) untuk periode ini.';
             }
 
             return (object) [
@@ -312,7 +341,7 @@ class DashboardController extends Controller
 
         // filter status dipilih di select button
         if (! empty($selectedStatus)) {
-            $peringkatOutlet = $peringkatOutlet->where('status', $selectedStatus)->values();
+            $peringkatOutlet = $peringkatOutlet->filter(fn ($o) => str_starts_with($o->status, $selectedStatus))->values();
         }
 
         switch ($sortBy) {
@@ -377,9 +406,18 @@ class DashboardController extends Controller
             });
 
         // 12. Distribusi Pengelompokan / Cluster Outlet
-        $countTinggi = $peringkatOutlet->where('status', 'Tinggi')->count();
-        $countSedang = $peringkatOutlet->where('status', 'Sedang')->count();
-        $countRendah = $peringkatOutlet->where('status', 'Rendah')->count();
+        $countTinggi = $peringkatOutlet->filter(function ($item) {
+            $st = strtolower($item->status);
+            return str_contains($st, 'tinggi');
+        })->count();
+        $countSedang = $peringkatOutlet->filter(function ($item) {
+            $st = strtolower($item->status);
+            return str_contains($st, 'sedang');
+        })->count();
+        $countRendah = $peringkatOutlet->filter(function ($item) {
+            $st = strtolower($item->status);
+            return str_contains($st, 'rendah') || str_contains($st, 'sepi');
+        })->count();
 
         $distribusiCluster = [
             'tinggi' => $countTinggi,

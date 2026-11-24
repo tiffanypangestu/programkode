@@ -16,7 +16,7 @@ class RequestCluster(BaseModel):
     periode: str
     data: List[DataOutlet]
 
-# data output dari process clustering, dikirim ke Laravel
+
 class ItemHasilClustering(BaseModel):
     id_outlet: int
     cluster: int
@@ -26,7 +26,7 @@ class ItemHasilClustering(BaseModel):
 class ResponseDetailClustering(BaseModel):
     wcss: Dict[str, float]
     k_optimal: int
-    silhouette_score: float
+    silhouette_score: Optional[float] = None
     data: List[ItemHasilClustering]
 
 class ResponseCluster(BaseModel):

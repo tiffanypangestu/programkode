@@ -36,7 +36,7 @@
 
                 {{-- Section Informasi Header --}}
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-1">
                                 {{ in_array(strtolower($namaRole ?? ''), ['admin']) ? 'Tanggal Faktur' : 'Tanggal Transaksi' }}
@@ -60,55 +60,46 @@
                             </select>
                         </div>
 
-                        {{-- Petugas BC --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                Petugas BC
-                                <span class="text-xs text-gray-400 font-normal">(Maks. 1 BC)</span>
-                            </label>
-                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                        @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                            <div>
+                                <label for="bc_karyawan_id" class="block text-sm font-semibold text-gray-700 mb-1">
+                                    Pilih Petugas BC (Beauty Consultant)
+                                </label>
                                 <select name="bc_karyawan_id" id="bc_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                                    <option value="">-- Tidak Ada / Kosongkan --</option>
-                                    @foreach ($bcList as $bc)
-                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id', $penjualan->bc_karyawan_id) == $bc->karyawan_id)>
-                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                    <option value="">-- Pilih Petugas BC --</option>
+                                    @foreach ($bcList as $b)
+                                        @php
+                                            $emailBc = $b->user->email ?? 'tanpa email';
+                                        @endphp
+                                        <option value="{{ $b->karyawan_id }}" @selected((string) old('bc_karyawan_id', $penjualan->bc_karyawan_id) === (string) $b->karyawan_id)>
+                                            {{ $b->nama_karyawan }} ({{ $emailBc }})
                                         </option>
                                     @endforeach
                                 </select>
-                            @else
-                                <div class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
-                                    <span class="font-bold text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded">BC</span>
-                                    <span class="font-medium truncate">{{ $penjualan->bcKaryawan->nama_karyawan ?? '-' }}</span>
-                                </div>
-                                <input type="hidden" name="bc_karyawan_id" value="{{ $penjualan->bc_karyawan_id }}">
-                            @endif
-                        </div>
+                            </div>
 
-                        {{-- Petugas SPG --}}
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                                Petugas SPG
-                                <span class="text-xs text-gray-400 font-normal">(Maks. 1 SPG)</span>
-                            </label>
-                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                            <div>
+                                <label for="spg_karyawan_id" class="block text-sm font-semibold text-gray-700 mb-1">
+                                    Pilih Petugas SPG (Sales Promotion Girl)
+                                </label>
                                 <select name="spg_karyawan_id" id="spg_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
-                                    <option value="">-- Tidak Ada / Kosongkan --</option>
-                                    @foreach ($spgList as $spg)
-                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id', $penjualan->spg_karyawan_id) == $spg->karyawan_id)>
-                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                                    <option value="">-- Pilih Petugas SPG --</option>
+                                    @foreach ($spgList as $s)
+                                        @php
+                                            $emailSpg = $s->user->email ?? 'tanpa email';
+                                        @endphp
+                                        <option value="{{ $s->karyawan_id }}" @selected((string) old('spg_karyawan_id', $penjualan->spg_karyawan_id) === (string) $s->karyawan_id)>
+                                            {{ $s->nama_karyawan }} ({{ $emailSpg }})
                                         </option>
                                     @endforeach
                                 </select>
-                            @else
-                                <div class="flex items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2.5 text-sm text-pink-900">
-                                    <span class="font-bold text-xs bg-pink-200 text-pink-800 px-1.5 py-0.5 rounded">SPG</span>
-                                    <span class="font-medium truncate">{{ $penjualan->spgKaryawan->nama_karyawan ?? '-' }}</span>
-                                </div>
-                                <input type="hidden" name="spg_karyawan_id" value="{{ $penjualan->spg_karyawan_id }}">
-                            @endif
-                        </div>
+                            </div>
+                        @else
+                            <input type="hidden" name="bc_karyawan_id" value="{{ $penjualan->bc_karyawan_id }}">
+                            <input type="hidden" name="spg_karyawan_id" value="{{ $penjualan->spg_karyawan_id }}">
+                        @endif
                     </div>
                 </div>
 

@@ -141,18 +141,9 @@
                                     @php
                                         $wcssData = $hasilClustering['wcss'] ?? [];
                                         $kOpt = (int) ($hasilClustering['k_optimal'] ?? 3);
-                                        if (empty($wcssData)) {
-                                            $wcssData = [
-                                                'k1' => 18.524,
-                                                'k2' => 8.411,
-                                                'k3' => 4.6225,
-                                                'k4' => 2.589,
-                                                'k5' => 2.298,
-                                            ];
-                                        }
                                         $prevW = null;
                                     @endphp
-                                    @foreach ($wcssData as $key => $val)
+                                    @forelse ($wcssData as $key => $val)
                                         @php
                                             $kIndex = (int) preg_replace('/[^0-9]/', '', $key);
                                             $wVal = (float) $val;
@@ -166,7 +157,7 @@
                                                 $ket = 'Inersia awal';
                                                 $badgeStyle = 'bg-gray-100 text-gray-700';
                                             } elseif ($isOpt) {
-                                                $ket = 'Titik Elbow Optimal ⭐';
+                                                $ket = 'Titik Elbow Optimal';
                                                 $badgeStyle =
                                                     'bg-emerald-100 text-emerald-800 font-bold border border-emerald-300';
                                             } elseif ($diffPct !== null && $diffPct < 15.0) {
@@ -194,7 +185,13 @@
                                                 </span>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="3" class="px-3.5 py-4 text-center text-gray-500">
+                                                Data WCSS belum tersedia. Pastikan FastAPI aktif lalu muat ulang halaman.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>

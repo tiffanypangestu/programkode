@@ -169,8 +169,7 @@ class AnalisisPerformaController extends Controller
 
         $rekapan_outlet = collect($load_data)->map(function ($indikator) use ($hasil_clustering, $data_outlet_wilayah) {
             $info_hasil_cluster = collect($hasil_clustering['data']['data'] ?? [])->firstWhere('id_outlet', $indikator['id_outlet']);
-            // ambil data normalisasi
-            
+
             $outletInfo = $data_outlet_wilayah->get($indikator['id_outlet']);
             $namaWilayah = $outletInfo->nama_wilayah ?? 'Dalam Kota';
 
@@ -229,8 +228,33 @@ class AnalisisPerformaController extends Controller
         ]);
     }
 
+    /**
+     * Ambil hasil K-Means asli dari FastAPI untuk satu periode.
+     * Dipakai juga oleh Dashboard agar status outlet sama persis dengan halaman Analisis Performa.
+     * Mengembalikan null jika FastAPI tidak dapat dihubungi / gagal.
+     */
+    public function ambilHasilClustering(string $periode_analisis): ?array
+    {
+        $load_data = $this->hitungIndikator($periode_analisis);
+        if (empty($load_data)) {
+            return null;
+        }
+
+        $fastApiUrl = rtrim(config('services.fastapi.url', 'http://127.0.0.1:8001'), '/');
+        try {
+            $response = Http::timeout(15)->post($fastApiUrl.'/api/analisa-clustering', [
+                'periode' => $periode_analisis,
+                'data' => $load_data,
+            ]);
+
+            return $response->successful() ? $response->json() : null;
+        } catch (Exception $e) {
+            return null;
+        }
+    }
+
     // function hitung 5 indikator khusus dari penjualan milik BC, SPG, dan Supervisor
-    private function hitungIndikator(string $periode_analisis)
+    public function hitungIndikator(string $periode_analisis)
     {
         $periode_lalu = Carbon::parse($periode_analisis)->subMonth();
 

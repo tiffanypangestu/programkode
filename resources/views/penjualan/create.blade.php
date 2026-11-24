@@ -79,7 +79,7 @@
                 <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
 
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {{-- 1. Tanggal Faktur / Transaksi --}}
                         <div>
                             <label for="tanggal_penjualan" class="block text-sm font-medium text-gray-700 mb-1">
@@ -120,79 +120,49 @@
                             </select>
                         </div>
 
-                        {{-- 3. Petugas BC (Beauty Consultant) --}}
-                        <div>
-                            <label for="bc_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                Petugas BC (Beauty Consultant)
-                                @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
-                                    <span class="text-xs text-gray-400 font-normal">(Maks. 1 BC)</span>
-                                @endif
-                            </label>
-                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                        @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                            {{-- 3. Pilih Petugas BC --}}
+                            <div>
+                                <label for="bc_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Pilih Petugas BC (Beauty Consultant)
+                                </label>
                                 <select name="bc_karyawan_id" id="bc_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
-                                    <option value="">-- Pilih BC (Opsional) --</option>
-                                    @foreach ($bcList as $bc)
-                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id') == $bc->karyawan_id)>
-                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih Petugas BC --</option>
+                                    @foreach ($bcList as $b)
+                                        @php
+                                            $emailBc = $b->user->email ?? 'tanpa email';
+                                        @endphp
+                                        <option value="{{ $b->karyawan_id }}" @selected((string) old('bc_karyawan_id') === (string) $b->karyawan_id)>
+                                            {{ $b->nama_karyawan }} ({{ $emailBc }})
                                         </option>
                                     @endforeach
                                 </select>
-                            @elseif (in_array(strtolower($namaRole ?? ''), ['beauty consultant', 'bc']))
-                                <div class="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-900">
-                                    <span class="font-bold text-xs bg-blue-200 text-blue-800 px-1.5 py-0.5 rounded">BC</span>
-                                    <span class="font-medium truncate">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</span>
-                                </div>
-                                <input type="hidden" name="bc_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
-                            @else
-                                <select name="bc_karyawan_id" id="bc_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
-                                    <option value="">-- Pilih BC Pendamping --</option>
-                                    @foreach ($bcList as $bc)
-                                        <option value="{{ $bc->karyawan_id }}" @selected(old('bc_karyawan_id') == $bc->karyawan_id)>
-                                            {{ $bc->nama_karyawan }} ({{ $bc->user->email ?? 'bc@udmedan.com' }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            @endif
-                        </div>
+                            </div>
 
-                        {{-- 4. Petugas SPG (Sales Promotion Girl) --}}
-                        <div>
-                            <label for="spg_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
-                                Petugas SPG (Sales Promotion Girl)
-                                @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
-                                    <span class="text-xs text-gray-400 font-normal">(Maks. 1 SPG)</span>
-                                @endif
-                            </label>
-                            @if (in_array(strtolower($namaRole ?? ''), ['admin', 'supervisor']))
+                            {{-- 4. Pilih Petugas SPG --}}
+                            <div>
+                                <label for="spg_karyawan_id" class="block text-sm font-medium text-gray-700 mb-1">
+                                    Pilih Petugas SPG (Sales Promotion Girl)
+                                </label>
                                 <select name="spg_karyawan_id" id="spg_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
-                                    <option value="">-- Pilih SPG (Opsional) --</option>
-                                    @foreach ($spgList as $spg)
-                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id') == $spg->karyawan_id)>
-                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
+                                    class="w-full rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
+                                    <option value="">-- Pilih Petugas SPG --</option>
+                                    @foreach ($spgList as $s)
+                                        @php
+                                            $emailSpg = $s->user->email ?? 'tanpa email';
+                                        @endphp
+                                        <option value="{{ $s->karyawan_id }}" @selected((string) old('spg_karyawan_id') === (string) $s->karyawan_id)>
+                                            {{ $s->nama_karyawan }} ({{ $emailSpg }})
                                         </option>
                                     @endforeach
                                 </select>
-                            @elseif (in_array(strtolower($namaRole ?? ''), ['sales promotion girl', 'spg']))
-                                <div class="flex items-center gap-2 rounded-xl border border-pink-200 bg-pink-50 px-3 py-2 text-sm text-pink-900">
-                                    <span class="font-bold text-xs bg-pink-200 text-pink-800 px-1.5 py-0.5 rounded">SPG</span>
-                                    <span class="font-medium truncate">{{ auth()->user()->nama_lengkap ?? auth()->user()->name }}</span>
-                                </div>
-                                <input type="hidden" name="spg_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
-                            @else
-                                <select name="spg_karyawan_id" id="spg_karyawan_id"
-                                    class="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm focus:ring-2 focus:outline-none focus:ring-green-600">
-                                    <option value="">-- Pilih SPG Pendamping --</option>
-                                    @foreach ($spgList as $spg)
-                                        <option value="{{ $spg->karyawan_id }}" @selected(old('spg_karyawan_id') == $spg->karyawan_id)>
-                                            {{ $spg->nama_karyawan }} ({{ $spg->user->email ?? 'spg@udmedan.com' }})
-                                        </option>
-                                    @endforeach
-                                </select>
-                            @endif
-                        </div>
+                            </div>
+                        @elseif (in_array(strtolower($namaRole ?? ''), ['beauty consultant', 'bc']))
+                            <input type="hidden" name="bc_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
+                        @elseif (in_array(strtolower($namaRole ?? ''), ['sales promotion girl', 'spg']))
+                            <input type="hidden" name="spg_karyawan_id" value="{{ $karyawanLogin->karyawan_id ?? '' }}">
+                        @endif
                     </div>
 
                     {{-- Tampilan Alamat Otomatis --}}
@@ -388,7 +358,6 @@
                         'wilayah_id' => $item->wilayah_id,
                     ];
                 })->values());
-
         // Inisialisasi data stok awal dari controller untuk outlet default (jika bukan admin)
         let currentStokMap = isRoleAdmin ? {} : @json($initialStok ?? []);
 
@@ -504,7 +473,7 @@
             });
         }
 
-        // Ambil Data Stok Outlet via AJAX saat dropdown outlet berubah
+        // Ambil Data Stok
         async function gantiOutlet() {
             updateAlamatOutlet();
 
@@ -594,7 +563,8 @@
                 });
 
                 // Jika produk terpilih sebelumnya ternyata stoknya 0, reset (hanya untuk non-admin)
-                if (!isRoleAdmin && currentVal && currentStokMap[currentVal] && currentStokMap[currentVal].sisa_stok <= 0) {
+                if (!isRoleAdmin && currentVal && currentStokMap[currentVal] && currentStokMap[currentVal]
+                    .sisa_stok <= 0) {
                     sel.value = '';
                 }
             });
@@ -633,7 +603,8 @@
                             infoStokBaris.innerHTML =
                                 `Sisa: <span class="text-yellow-600 font-bold">${sisaStok} pcs (Menipis)</span>`;
                         } else {
-                            infoStokBaris.innerHTML = `Sisa: <span class="text-emerald-600 font-bold">${sisaStok} pcs</span>`;
+                            infoStokBaris.innerHTML =
+                                `Sisa: <span class="text-emerald-600 font-bold">${sisaStok} pcs</span>`;
                         }
                     }
                 } else if (infoStokBaris) {

@@ -28,13 +28,14 @@ def root():
 
 @app.post("/api/analisa-clustering", response_model=ResponseCluster)
 def analisa_outlet(request: RequestCluster, db: Session = Depends(get_db)):
+    
     hasil = proses_clustering(request.data)
     
-    # Kalau ada error di clustering, lemparkan HTTPException  
+    # error di clustering
     if "error_detail" in hasil:
         raise HTTPException(status_code=500, detail=f"Terjadi kesalahan pada proses clustering: {hasil['error_detail']}")
 
-    # Simpan hasil clustering ke database jika memungkinkan
+    # Simpan hasil clustering ke database 
     try:
         data_cluster = hasil.get("data", [])
         outlet_name_map = {item.id_outlet: item.nama_outlet for item in request.data if item.id_outlet}

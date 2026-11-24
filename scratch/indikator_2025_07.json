@@ -1,0 +1,402 @@
+[
+    {
+        "id_outlet": 92,
+        "nama_outlet": "Toko Cantik",
+        "omzet": 15195500,
+        "growth": 25.74,
+        "kontribusi": 2.84,
+        "frekuensi": 6,
+        "jumlah_produk": 349,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Yulia Citra, SPG: Fitri Handayani (Toko Cantik)"
+    },
+    {
+        "id_outlet": 93,
+        "nama_outlet": "Central Supermarket",
+        "omzet": 13657500,
+        "growth": 9.29,
+        "kontribusi": 2.56,
+        "frekuensi": 7,
+        "jumlah_produk": 261,
+        "petugas": "BC: Nadia Maharani, SPG: Indah Permatasari (Central Supermarket)"
+    },
+    {
+        "id_outlet": 94,
+        "nama_outlet": "Olivia Salon Supplier",
+        "omzet": 14402500,
+        "growth": 10.32,
+        "kontribusi": 2.7,
+        "frekuensi": 8,
+        "jumlah_produk": 344,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Nadia Maharani, SPG: Maya Anggraini (Olivia Salon Supplier)"
+    },
+    {
+        "id_outlet": 95,
+        "nama_outlet": "Christine Salon Cosmetics & Spa",
+        "omzet": 15846000,
+        "growth": -0.32,
+        "kontribusi": 2.97,
+        "frekuensi": 8,
+        "jumlah_produk": 336,
+        "petugas": "BC: Tiara Puspita, SPG: Ni Wayan Rustini (Christine Salon Cosmetics & Spa)"
+    },
+    {
+        "id_outlet": 96,
+        "nama_outlet": "Christine Salon Supplier 2",
+        "omzet": 18239500,
+        "growth": 5.3,
+        "kontribusi": 3.41,
+        "frekuensi": 8,
+        "jumlah_produk": 526,
+        "petugas": "BC: Tiara Puspita, SPG: Hotnaida Marpaung (Christine Salon Supplier 2)"
+    },
+    {
+        "id_outlet": 97,
+        "nama_outlet": "Christine Cosmetic Salon & Supplier 3",
+        "omzet": 18855500,
+        "growth": 27.11,
+        "kontribusi": 3.53,
+        "frekuensi": 6,
+        "jumlah_produk": 347,
+        "petugas": "BC: Widya Nirmala, SPG: Rohani Simatupang (Christine Cosmetic Salon & Supplier 3)"
+    },
+    {
+        "id_outlet": 98,
+        "nama_outlet": "Christine Cosmetic & Salon Supplier 4",
+        "omzet": 15871500,
+        "growth": 2.15,
+        "kontribusi": 2.97,
+        "frekuensi": 5,
+        "jumlah_produk": 335,
+        "petugas": "BC: Widya Nirmala, SPG: Masniari Hutabarat (Christine Cosmetic & Salon Supplier 4)"
+    },
+    {
+        "id_outlet": 99,
+        "nama_outlet": "Christine Cosmetic & Salon Supplier 5",
+        "omzet": 16902000,
+        "growth": -4.83,
+        "kontribusi": 3.16,
+        "frekuensi": 7,
+        "jumlah_produk": 310,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Ni Putu Suartini, SPG: Nurhasanah (Christine Cosmetic & Salon Supplier 5)"
+    },
+    {
+        "id_outlet": 100,
+        "nama_outlet": "Toko Maharani",
+        "omzet": 15682000,
+        "growth": -13.45,
+        "kontribusi": 2.94,
+        "frekuensi": 8,
+        "jumlah_produk": 452,
+        "petugas": "BC: Ni Putu Suartini, SPG: Mardiana (Toko Maharani)"
+    },
+    {
+        "id_outlet": 101,
+        "nama_outlet": "Toko Djaya Cosmetic",
+        "omzet": 16970000,
+        "growth": 8.79,
+        "kontribusi": 3.18,
+        "frekuensi": 8,
+        "jumlah_produk": 472,
+        "petugas": "BC: Ni Kadek Suryani, SPG: Suryani (Toko Djaya Cosmetic)"
+    },
+    {
+        "id_outlet": 102,
+        "nama_outlet": "Toko FA Collection",
+        "omzet": 17501500,
+        "growth": -19.91,
+        "kontribusi": 3.28,
+        "frekuensi": 7,
+        "jumlah_produk": 417,
+        "petugas": "BC: Ni Komang Sriningsih, SPG: Kartini Utami (Toko FA Collection)"
+    },
+    {
+        "id_outlet": 103,
+        "nama_outlet": "Bandung Collection",
+        "omzet": 16935000,
+        "growth": 9.42,
+        "kontribusi": 3.17,
+        "frekuensi": 8,
+        "jumlah_produk": 527,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Ni Kadek Suryani, SPG: Rusmini (Bandung Collection)"
+    },
+    {
+        "id_outlet": 104,
+        "nama_outlet": "Bandung Collection",
+        "omzet": 15267000,
+        "growth": -11.74,
+        "kontribusi": 2.86,
+        "frekuensi": 7,
+        "jumlah_produk": 274,
+        "petugas": "BC: Ni Komang Sriningsih, SPG: Sulastri (Bandung Collection)"
+    },
+    {
+        "id_outlet": 105,
+        "nama_outlet": "Salon Yong",
+        "omzet": 10645500,
+        "growth": 44.72,
+        "kontribusi": 1.99,
+        "frekuensi": 6,
+        "jumlah_produk": 253,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Nanda Pratiwi, SPG: Nurul Hidayati (Salon Yong)"
+    },
+    {
+        "id_outlet": 106,
+        "nama_outlet": "Supermarket Sinar Terang",
+        "omzet": 10317500,
+        "growth": -20.1,
+        "kontribusi": 1.93,
+        "frekuensi": 7,
+        "jumlah_produk": 228,
+        "petugas": "BC: Anisa Rahmawati, SPG: Novita Sari (Supermarket Sinar Terang)"
+    },
+    {
+        "id_outlet": 107,
+        "nama_outlet": "Toko Duta Swalayan",
+        "omzet": 12907500,
+        "growth": 24.82,
+        "kontribusi": 2.42,
+        "frekuensi": 5,
+        "jumlah_produk": 231,
+        "petugas": "BC: Putri Handayani, SPG: Dian Kusuma (Toko Duta Swalayan)"
+    },
+    {
+        "id_outlet": 108,
+        "nama_outlet": "PRIMA",
+        "omzet": 7108000,
+        "growth": -25.52,
+        "kontribusi": 1.33,
+        "frekuensi": 4,
+        "jumlah_produk": 132,
+        "petugas": "BC: Dina Oktaviani, SPG: Sri Rahayu (PRIMA)"
+    },
+    {
+        "id_outlet": 109,
+        "nama_outlet": "Remaja Swalayan",
+        "omzet": 9071000,
+        "growth": 25.94,
+        "kontribusi": 1.7,
+        "frekuensi": 7,
+        "jumlah_produk": 175,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Dina Oktaviani, SPG: Tri Wahyuni (Remaja Swalayan)"
+    },
+    {
+        "id_outlet": 110,
+        "nama_outlet": "Aris Jaya Salon Supplier",
+        "omzet": 16352000,
+        "growth": -20.68,
+        "kontribusi": 3.06,
+        "frekuensi": 7,
+        "jumlah_produk": 311,
+        "petugas": "BC: Ni Made Yuliani, SPG: Jumiatin (Aris Jaya Salon Supplier)"
+    },
+    {
+        "id_outlet": 111,
+        "nama_outlet": "Arjuno",
+        "omzet": 16435500,
+        "growth": 2.44,
+        "kontribusi": 3.08,
+        "frekuensi": 5,
+        "jumlah_produk": 381,
+        "petugas": "BC: Ni Made Yuliani, SPG: Hartini (Arjuno)"
+    },
+    {
+        "id_outlet": 112,
+        "nama_outlet": "Toko Amerta Dadi Cosmetic",
+        "omzet": 21885500,
+        "growth": 29.65,
+        "kontribusi": 4.1,
+        "frekuensi": 8,
+        "jumlah_produk": 531,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Nurul Aisyah, SPG: Suparmi (Toko Amerta Dadi Cosmetic)"
+    },
+    {
+        "id_outlet": 113,
+        "nama_outlet": "Central Swalayan",
+        "omzet": 15507500,
+        "growth": 51.93,
+        "kontribusi": 2.9,
+        "frekuensi": 6,
+        "jumlah_produk": 370,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Irma Suryani, SPG: Hesti Wulandari (Central Swalayan)"
+    },
+    {
+        "id_outlet": 114,
+        "nama_outlet": "TOKO KARTINI",
+        "omzet": 9780000,
+        "growth": 13.16,
+        "kontribusi": 1.83,
+        "frekuensi": 6,
+        "jumlah_produk": 191,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Riska Septiani, SPG: Dwi Lestari (TOKO KARTINI)"
+    },
+    {
+        "id_outlet": 115,
+        "nama_outlet": "Toko Sumber Sehat",
+        "omzet": 5669000,
+        "growth": -10.98,
+        "kontribusi": 1.06,
+        "frekuensi": 4,
+        "jumlah_produk": 88,
+        "petugas": "BC: Riska Septiani, SPG: Endang Purwanti (Toko Sumber Sehat)"
+    },
+    {
+        "id_outlet": 116,
+        "nama_outlet": "Toko Sehat Baru Mojosari",
+        "omzet": 11675500,
+        "growth": -20.38,
+        "kontribusi": 2.19,
+        "frekuensi": 5,
+        "jumlah_produk": 252,
+        "petugas": "BC: Yulia Citra, SPG: Nurlaila (Toko Sehat Baru Mojosari)"
+    },
+    {
+        "id_outlet": 117,
+        "nama_outlet": "SEHAT",
+        "omzet": 13606500,
+        "growth": 12.03,
+        "kontribusi": 2.55,
+        "frekuensi": 5,
+        "jumlah_produk": 237,
+        "petugas": "BC: Anisa Rahmawati, SPG: Anita Wijaya (SEHAT)"
+    },
+    {
+        "id_outlet": 118,
+        "nama_outlet": "BAGUS",
+        "omzet": 4314000,
+        "growth": -44.4,
+        "kontribusi": 0.81,
+        "frekuensi": 4,
+        "jumlah_produk": 123,
+        "petugas": "BC: Tari Anggraini, SPG: Eka Susanti (BAGUS)"
+    },
+    {
+        "id_outlet": 119,
+        "nama_outlet": "Sumber Baru Swalayan",
+        "omzet": 8480500,
+        "growth": -48.87,
+        "kontribusi": 1.59,
+        "frekuensi": 4,
+        "jumlah_produk": 202,
+        "petugas": "BC: Putri Handayani, SPG: Rina Marlina (Sumber Baru Swalayan)"
+    },
+    {
+        "id_outlet": 120,
+        "nama_outlet": "Samudra Swalayan",
+        "omzet": 10922000,
+        "growth": 1.14,
+        "kontribusi": 2.04,
+        "frekuensi": 6,
+        "jumlah_produk": 201,
+        "petugas": "BC: Silvia Anggraini, SPG: Kusuma Wardani (Samudra Swalayan)"
+    },
+    {
+        "id_outlet": 121,
+        "nama_outlet": "Toko Blums",
+        "omzet": 10023500,
+        "growth": -23.25,
+        "kontribusi": 1.88,
+        "frekuensi": 6,
+        "jumlah_produk": 215,
+        "petugas": "BC: Irma Suryani, SPG: Erna Setiawati (Toko Blums)"
+    },
+    {
+        "id_outlet": 122,
+        "nama_outlet": "D & D Store",
+        "omzet": 16596000,
+        "growth": -9.36,
+        "kontribusi": 3.11,
+        "frekuensi": 8,
+        "jumlah_produk": 244,
+        "petugas": "BC: Nurul Aisyah, SPG: Maryani (D & D Store)"
+    },
+    {
+        "id_outlet": 123,
+        "nama_outlet": "DEA WIJAYA",
+        "omzet": 8056000,
+        "growth": -15.08,
+        "kontribusi": 1.51,
+        "frekuensi": 5,
+        "jumlah_produk": 195,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Tari Anggraini, SPG: Rini Sulistyowati (DEA WIJAYA)"
+    },
+    {
+        "id_outlet": 124,
+        "nama_outlet": "BAGUS",
+        "omzet": 8087500,
+        "growth": -14.9,
+        "kontribusi": 1.51,
+        "frekuensi": 5,
+        "jumlah_produk": 180,
+        "petugas": "BC: Nanda Pratiwi, SPG: Siti Aminah (BAGUS)"
+    },
+    {
+        "id_outlet": 125,
+        "nama_outlet": "Sri Rejeki",
+        "omzet": 9592500,
+        "growth": 46.28,
+        "kontribusi": 1.8,
+        "frekuensi": 6,
+        "jumlah_produk": 261,
+        "petugas": "BC: Melani Safitri, SPG: Yuni Astuti (Sri Rejeki)"
+    },
+    {
+        "id_outlet": 126,
+        "nama_outlet": "Toko Agung (Cik Niken)",
+        "omzet": 12370500,
+        "growth": 1.95,
+        "kontribusi": 2.32,
+        "frekuensi": 6,
+        "jumlah_produk": 266,
+        "petugas": "BC: Devi Novitasari, SPG: Ni Made Srinadi (Toko Agung (Cik Niken)"
+    },
+    {
+        "id_outlet": 127,
+        "nama_outlet": "Toko Melody Cosmetic",
+        "omzet": 18832000,
+        "growth": 19.22,
+        "kontribusi": 3.52,
+        "frekuensi": 6,
+        "jumlah_produk": 385,
+        "petugas": "BC: Mega Utami, SPG: Suhartatik (Toko Melody Cosmetic)"
+    },
+    {
+        "id_outlet": 128,
+        "nama_outlet": "Toserba Diva",
+        "omzet": 12165500,
+        "growth": -6.01,
+        "kontribusi": 2.28,
+        "frekuensi": 5,
+        "jumlah_produk": 275,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Devi Novitasari, SPG: Ni Ketut Artini (Toserba Diva)"
+    },
+    {
+        "id_outlet": 129,
+        "nama_outlet": "Toko Sehat Ayu Kosmetik",
+        "omzet": 14589000,
+        "growth": 14.5,
+        "kontribusi": 2.73,
+        "frekuensi": 5,
+        "jumlah_produk": 279,
+        "petugas": "BC: Silvia Anggraini, SPG: Luh Putu Sukartini (Toko Sehat Ayu Kosmetik)"
+    },
+    {
+        "id_outlet": 130,
+        "nama_outlet": "Toko Sandat",
+        "omzet": 15463500,
+        "growth": -4.14,
+        "kontribusi": 2.89,
+        "frekuensi": 6,
+        "jumlah_produk": 379,
+        "petugas": "BC: Mega Utami, SPG: Widya Astuti (Toko Sandat)"
+    },
+    {
+        "id_outlet": 131,
+        "nama_outlet": "TOKO RAHAYU",
+        "omzet": 12500000,
+        "growth": 36.08,
+        "kontribusi": 2.34,
+        "frekuensi": 5,
+        "jumlah_produk": 202,
+        "petugas": "Supervisor: Siti Rahmawati, BC: Melani Safitri, SPG: Ratna Juwita (TOKO RAHAYU)"
+    }
+]

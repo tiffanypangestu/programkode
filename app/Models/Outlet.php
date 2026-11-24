@@ -41,6 +41,11 @@ class Outlet extends Model
                     ->withTimestamps();
     }
 
+    public function karyawan()
+    {
+        return $this->karyawans();
+    }
+
     /**
      * Stok produk di outlet ini.
      */

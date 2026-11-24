@@ -3,6 +3,10 @@
 @section('title', 'Dashboard Performa Outlet - UD Medan')
 
 @section('content')
+    @php
+        $userRole = strtolower(auth()->user()->role?->nama_role ?? '');
+        $isBcOrSpg = in_array($userRole, ['bc', 'spg', 'beauty consultant', 'sales promotion girl']);
+    @endphp
     <div class="space-y-10 lg:space-y-12 pb-16">
         {{-- Header & Filter Periode --}}
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between border-b border-gray-200 pb-6">
@@ -44,7 +48,85 @@
         </div>
 
         {{-- Ringkasan Statistik Utama (Metric Cards) --}}
-        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        @if ($isBcOrSpg)
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-3">
+                {{-- Card 1: Total Omzet Penjualan --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-emerald-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Total Omzet Penjualan</p>
+                            <p class="mt-2 text-xl sm:text-2xl font-bold text-gray-800 tracking-tight whitespace-nowrap">
+                                Rp {{ number_format($totalOmzet, 0, ',', '.') }}
+                            </p>
+                        </div>
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/60 shadow-xs">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                        <span>Total omzet outlet tugas Anda</span>
+                    </div>
+                </div>
+
+                {{-- Card 2: Growth Penjualan --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-emerald-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Growth Penjualan</p>
+                            <p class="mt-2 text-xl sm:text-2xl font-bold {{ $growthOmzetPerusahaan >= 0 ? 'text-emerald-600' : 'text-rose-600' }} tracking-tight whitespace-nowrap">
+                                {{ $growthOmzetPerusahaan >= 0 ? '+' : '' }}{{ number_format($growthOmzetPerusahaan, 2) }}%
+                            </p>
+                        </div>
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl {{ $growthOmzetPerusahaan >= 0 ? 'bg-emerald-50 text-emerald-600 ring-emerald-50/60' : 'bg-rose-50 text-rose-600 ring-rose-50/60' }} ring-4 shadow-xs">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                @if ($growthOmzetPerusahaan >= 0)
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                                @else
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                                @endif
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-xs text-gray-400">
+                        <span>vs bulan sebelumnya</span>
+                    </div>
+                </div>
+
+                {{-- Card 3: Total Produk Terjual --}}
+                <div
+                    class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-indigo-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-[11px] font-semibold uppercase tracking-wider text-gray-400">Produk Terjual</p>
+                            <p class="mt-2 text-xl sm:text-2xl font-bold text-gray-800 tracking-tight whitespace-nowrap">
+                                {{ number_format($totalProdukTerjual, 0, ',', '.') }} <span
+                                    class="text-xs font-normal text-gray-400">Pcs</span>
+                            </p>
+                        </div>
+                        <div
+                            class="flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 ring-4 ring-indigo-50/60 shadow-xs">
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex items-center gap-2 text-xs text-gray-500">
+                        <span>Total kuantitas produk laku terjual</span>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             <div
                 class="relative overflow-hidden rounded-2xl border border-gray-100 bg-white p-6 shadow-sm transition-all duration-200 hover:shadow-md hover:border-emerald-200">
                 <div class="flex items-center justify-between">
@@ -181,6 +263,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         {{-- Highlight Performa Outlet: Tertinggi vs Terendah --}}
         <div class="grid grid-cols-1 gap-6 lg:gap-8 lg:grid-cols-2">
@@ -222,22 +305,40 @@
 
                 {{-- 3 Indikator Performa (Box Modern Terpisah) --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 my-6">
-                    <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Kontribusi</p>
-                        <p class="mt-1 text-base font-bold text-emerald-700">{{ $outletTertinggi?->kontribusi ?? 0 }}%</p>
-                    </div>
-                    <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
-                        <p
-                            class="mt-1 text-base font-bold {{ ($outletTertinggi?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
-                            {{ ($outletTertinggi?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTertinggi?->growth ?? 0 }}%
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Frekuensi</p>
-                        <p class="mt-1 text-base font-bold text-gray-800">{{ $outletTertinggi?->frekuensi ?? 0 }}x
-                            Transaksi</p>
-                    </div>
+                    @if ($isBcOrSpg)
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Omzet</p>
+                            <p class="mt-1 text-base font-bold text-emerald-700">Rp {{ number_format($outletTertinggi?->omzet ?? 0, 0, ',', '.') }}</p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
+                            <p
+                                class="mt-1 text-base font-bold {{ ($outletTertinggi?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                {{ ($outletTertinggi?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTertinggi?->growth ?? 0 }}%
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Produk Terjual</p>
+                            <p class="mt-1 text-base font-bold text-gray-800">{{ number_format($outletTertinggi?->jumlah_produk ?? 0, 0, ',', '.') }} pcs</p>
+                        </div>
+                    @else
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Kontribusi</p>
+                            <p class="mt-1 text-base font-bold text-emerald-700">{{ $outletTertinggi?->kontribusi ?? 0 }}%</p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
+                            <p
+                                class="mt-1 text-base font-bold {{ ($outletTertinggi?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                {{ ($outletTertinggi?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTertinggi?->growth ?? 0 }}%
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-emerald-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Frekuensi</p>
+                            <p class="mt-1 text-base font-bold text-gray-800">{{ $outletTertinggi?->frekuensi ?? 0 }}x
+                                Transaksi</p>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-emerald-100 text-xs">
@@ -245,10 +346,12 @@
                         Produk Terlaris: <strong
                             class="text-gray-800 font-semibold">{{ $outletTertinggi?->produk_terlaris ?? '-' }}</strong>
                     </span>
-                    <span
-                        class="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-emerald-700 font-semibold text-[11px]">
-                        {{ $outletTertinggi?->cluster ?? 'Cluster 1 (Ramai)' }}
-                    </span>
+                    @if (!$isBcOrSpg)
+                        <span
+                            class="rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 text-emerald-700 font-semibold text-[11px]">
+                            {{ $outletTertinggi?->cluster ?? 'Cluster 1 (Ramai)' }}
+                        </span>
+                    @endif
                 </div>
             </div>
 
@@ -290,22 +393,40 @@
 
                 {{-- 3 Indikator Performa (Box Modern Terpisah) --}}
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4 my-6">
-                    <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Kontribusi</p>
-                        <p class="mt-1 text-base font-bold text-gray-700">{{ $outletTerendah?->kontribusi ?? 0 }}%</p>
-                    </div>
-                    <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
-                        <p
-                            class="mt-1 text-base font-bold {{ ($outletTerendah?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
-                            {{ ($outletTerendah?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTerendah?->growth ?? 0 }}%
-                        </p>
-                    </div>
-                    <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
-                        <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Frekuensi</p>
-                        <p class="mt-1 text-base font-bold text-gray-800">{{ $outletTerendah?->frekuensi ?? 0 }}x
-                            Transaksi</p>
-                    </div>
+                    @if ($isBcOrSpg)
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Omzet</p>
+                            <p class="mt-1 text-base font-bold text-rose-600">Rp {{ number_format($outletTerendah?->omzet ?? 0, 0, ',', '.') }}</p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
+                            <p
+                                class="mt-1 text-base font-bold {{ ($outletTerendah?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                {{ ($outletTerendah?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTerendah?->growth ?? 0 }}%
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Produk Terjual</p>
+                            <p class="mt-1 text-base font-bold text-gray-800">{{ number_format($outletTerendah?->jumlah_produk ?? 0, 0, ',', '.') }} pcs</p>
+                        </div>
+                    @else
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Kontribusi</p>
+                            <p class="mt-1 text-base font-bold text-gray-700">{{ $outletTerendah?->kontribusi ?? 0 }}%</p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Pertumbuhan</p>
+                            <p
+                                class="mt-1 text-base font-bold {{ ($outletTerendah?->growth ?? 0) >= 0 ? 'text-emerald-700' : 'text-rose-700' }}">
+                                {{ ($outletTerendah?->growth ?? 0) >= 0 ? '+' : '' }}{{ $outletTerendah?->growth ?? 0 }}%
+                            </p>
+                        </div>
+                        <div class="rounded-xl bg-white border border-rose-100 p-3.5 text-center shadow-2xs">
+                            <p class="text-[11px] font-medium text-gray-400 uppercase tracking-wider">Frekuensi</p>
+                            <p class="mt-1 text-base font-bold text-gray-800">{{ $outletTerendah?->frekuensi ?? 0 }}x
+                                Transaksi</p>
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-rose-100 text-xs">
@@ -313,10 +434,12 @@
                         Rekomendasi: <span
                             class="text-rose-700 font-medium">{{ $outletTerendah?->rekomendasi ?? 'Perlu evaluasi promosi & penambahan variasi stok' }}</span>
                     </span>
-                    <span
-                        class="rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-rose-700 font-semibold text-[11px]">
-                        {{ $outletTerendah?->cluster ?? 'Cluster 3 (Sepi)' }}
-                    </span>
+                    @if (!$isBcOrSpg)
+                        <span
+                            class="rounded-full bg-rose-50 border border-rose-200 px-2.5 py-0.5 text-rose-700 font-semibold text-[11px]">
+                            {{ $outletTerendah?->cluster ?? 'Cluster 3 (Sepi)' }}
+                        </span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -394,6 +517,7 @@
                             class="w-36 sm:w-48 rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs text-gray-900 placeholder-gray-500 shadow-sm focus:border-green-600 focus:outline-none">
                     </div>
 
+                    @if (!$isBcOrSpg)
                     {{-- Filter Wilayah --}}
                     <select name="wilayah" onchange="this.form.submit()"
                         class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-green-600 focus:outline-none">
@@ -405,7 +529,6 @@
                         @endforeach
                     </select>
 
-                    {{-- Filter Cluster --}}
                     {{-- Filter Cluster (4 Pilihan) --}}
                     <select name="status" onchange="this.form.submit()"
                         class="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm focus:border-green-600 focus:outline-none">
@@ -428,6 +551,7 @@
                             C4 - Rendah (Sepi)
                         </option>
                     </select>
+                    @endif
 
                     {{-- Urutan Ranking --}}
                     <select name="sort_by" onchange="this.form.submit()"
@@ -436,18 +560,22 @@
                             {{ request('sort_by', 'omzet_desc') == 'omzet_desc' ? 'selected' : '' }}>
                             Omzet Tertinggi
                         </option>
+                        @if (!$isBcOrSpg)
                         <option value="frekuensi_desc" {{ request('sort_by') == 'frekuensi_desc' ? 'selected' : '' }}>
                             Frekuensi Terbanyak
                         </option>
+                        @endif
                         <option value="growth_desc" {{ request('sort_by') == 'growth_desc' ? 'selected' : '' }}>
                             Growth
                         </option>
                         <option value="produk_desc" {{ request('sort_by') == 'produk_desc' ? 'selected' : '' }}>
                             Jumlah Produk Terjual
                         </option>
+                        @if (!$isBcOrSpg)
                         <option value="kontribusi_desc" {{ request('sort_by') == 'kontribusi_desc' ? 'selected' : '' }}>
                             Kontribusi Outlet
                         </option>
+                        @endif
                     </select>
 
 
@@ -460,15 +588,23 @@
                         <tr>
                             <th class="px-5 py-3 text-center">Rank</th>
                             <th class="px-5 py-3">Nama Outlet</th>
-                            <th class="px-5 py-3">Petugas Lapangan</th>
+                            @if (!$isBcOrSpg)
+                                <th class="px-5 py-3">Petugas Lapangan</th>
+                            @endif
                             <th class="px-5 py-3 text-right">Omzet (Rp)</th>
-                            <th class="px-5 py-3 text-center">Kontribusi (%)</th>
+                            @if (!$isBcOrSpg)
+                                <th class="px-5 py-3 text-center">Kontribusi (%)</th>
+                            @endif
                             <th class="px-5 py-3 text-center">Growth (%)</th>
-                            <th class="px-5 py-3 text-center">Frekuensi</th>
+                            @if (!$isBcOrSpg)
+                                <th class="px-5 py-3 text-center">Frekuensi</th>
+                            @endif
                             <th class="px-5 py-3 text-center">Produk Terjual</th>
-                            <th class="px-5 py-3">Produk Terlaris di Outlet</th>
-                            <th class="px-5 py-3 text-center">Status Performa</th>
-                            <th class="px-5 py-3">Rekomendasi Strategis</th>
+                            @if (!$isBcOrSpg)
+                                <th class="px-5 py-3">Produk Terlaris di Outlet</th>
+                                <th class="px-5 py-3 text-center">Status Performa</th>
+                                <th class="px-5 py-3">Rekomendasi Strategis</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-xs">
@@ -498,6 +634,7 @@
                                     </div>
                                 </td>
 
+                                @if (!$isBcOrSpg)
                                 {{-- Petugas Lapangan --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-gray-600">
                                     @if ($row->petugas)
@@ -509,12 +646,14 @@
                                         <span class="text-gray-400 italic">-</span>
                                     @endif
                                 </td>
+                                @endif
 
                                 {{-- Omzet --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-right font-semibold text-gray-800">
                                     Rp {{ number_format($row->omzet, 0, ',', '.') }}
                                 </td>
 
+                                @if (!$isBcOrSpg)
                                 {{-- Kontribusi % --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center">
                                     <div class="flex items-center justify-center gap-1.5">
@@ -525,6 +664,7 @@
                                         <span class="font-medium text-gray-800">{{ $row->kontribusi }}%</span>
                                     </div>
                                 </td>
+                                @endif
 
                                 {{-- Growth % --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center">
@@ -546,16 +686,19 @@
                                     @endif
                                 </td>
 
+                                @if (!$isBcOrSpg)
                                 {{-- Frekuensi --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center font-normal text-gray-700">
                                     {{ $row->frekuensi }}x
                                 </td>
+                                @endif
 
                                 {{-- Jumlah Produk --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center font-normal text-gray-700">
                                     {{ number_format($row->jumlah_produk, 0, ',', '.') }} pcs
                                 </td>
 
+                                @if (!$isBcOrSpg)
                                 {{-- Produk Paling Laku --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-gray-700">
                                     <span
@@ -566,41 +709,28 @@
 
                                 {{-- Status Performa & Cluster --}}
                                 <td class="whitespace-nowrap px-5 py-3.5 text-center">
-                                    {{-- Cluster 1: Sangat Tinggi (Hijau Emerald) --}}
-                                    @if ($row->cluster_code === 'C1')
-                                        <span
-                                            class="inline-flex rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
-                                            C1 • Sangat Tinggi (Sangat Ramai)
-                                        </span>
-                                        {{-- Cluster 2: Tinggi (Biru) --}}
-                                    @elseif ($row->cluster_code === 'C2')
-                                        <span
-                                            class="inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
-                                            C2 • Tinggi (Ramai)
-                                        </span>
-                                        {{-- Cluster 3: Sedang (Kuning Amber) --}}
-                                    @elseif ($row->cluster_code === 'C3')
-                                        <span
-                                            class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                                            C3 • Sedang
-                                        </span>
-                                        {{-- Cluster 4: Rendah (Merah Mawar) --}}
-                                    @else
-                                        <span
-                                            class="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-800">
-                                            C4 • Rendah (Sepi)
-                                        </span>
-                                    @endif
+                                    @php
+                                        $stLower = strtolower($row->status);
+                                        if (str_contains($stLower, 'sangat tinggi')) { $badge = 'bg-emerald-100 text-emerald-800'; }
+                                        elseif (str_contains($stLower, 'tinggi')) { $badge = 'bg-blue-100 text-blue-800'; }
+                                        elseif (str_contains($stLower, 'sedang')) { $badge = 'bg-amber-100 text-amber-800'; }
+                                        elseif (str_contains($stLower, 'rendah') || str_contains($stLower, 'sepi')) { $badge = 'bg-rose-100 text-rose-800'; }
+                                        else { $badge = 'bg-gray-100 text-gray-600'; }
+                                    @endphp
+                                    <span class="inline-flex rounded-full {{ $badge }} px-2.5 py-1 text-xs font-semibold">
+                                        {{ $row->cluster_code ? $row->cluster_code . ' • ' : '' }}{{ $row->status }}
+                                    </span>
                                 </td>
 
                                 {{-- Rekomendasi --}}
                                 <td class="px-5 py-3.5 text-xs text-gray-600 min-w-50">
                                     {{ $row->rekomendasi }}
                                 </td>
+                                @endif
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="px-6 py-12 text-center text-gray-400">
+                                <td colspan="{{ $isBcOrSpg ? 5 : 11 }}" class="px-6 py-12 text-center text-gray-400">
                                     Tidak ada data performa outlet untuk periode {{ $selectedPeriode }}.
                                 </td>
                             </tr>

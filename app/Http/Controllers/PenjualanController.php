@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Exports\TemplatePenjualanExport;
+use App\Models\Bc;
 use App\Models\Karyawan;
 use App\Models\Outlet;
 use App\Models\Penjualan;
 use App\Models\Produk;
+use App\Models\Spg;
 use App\Models\Transaksi;
 use App\Models\TransaksiDetail;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -279,19 +282,77 @@ class PenjualanController extends Controller
 
         $karyawan = Karyawan::with('user')->orderBy('nama_karyawan')->get();
 
-        $bcList = Karyawan::whereHas('role', function ($q) {
-            $q->whereIn('nama_role', ['Beauty Consultant', 'BC']);
-        })->orWhereIn('jabatan', ['Beauty Consultant', 'BC'])
-            ->with('user')
-            ->orderBy('nama_karyawan')
+        // Pastikan semua user ber-role BC atau SPG memiliki record karyawan agar selalu terhubung ke email
+        $missingKaryawanUsers = User::whereDoesntHave('karyawan')
+            ->whereHas('role', function ($q) {
+                $q->whereIn('nama_role', ['Beauty Consultant', 'BC', 'Sales Promotion Girl', 'SPG']);
+            })
+            ->with('role')
             ->get();
+        foreach ($missingKaryawanUsers as $mu) {
+            Karyawan::create([
+                'user_id' => $mu->user_id,
+                'role_id' => $mu->role_id,
+                'nama_karyawan' => $mu->nama_lengkap ?? $mu->name,
+                'jabatan' => $mu->role?->nama_role ?? 'Karyawan',
+                'nomor_telepon' => $mu->nomor_telepon,
+                'tahun_masuk' => (int) date('Y'),
+            ]);
+        }
 
-        $spgList = Karyawan::whereHas('role', function ($q) {
-            $q->whereIn('nama_role', ['Sales Promotion Girl', 'SPG']);
-        })->orWhereIn('jabatan', ['Sales Promotion Girl', 'SPG'])
-            ->with('user')
-            ->orderBy('nama_karyawan')
-            ->get();
+        // Ambil daftar BC resmi sesuai menu Beauty Consultant (30 BC)
+        $bcModels = Bc::with(['user.karyawan'])->orderBy('nama_bc')->get();
+        $bcList = $bcModels->map(function ($b) {
+            return (object) [
+                'bc_id' => $b->bc_id,
+                'karyawan_id' => $b->user?->karyawan?->karyawan_id,
+                'nama_bc' => $b->nama_bc,
+                'nama_karyawan' => $b->nama_bc,
+                'email' => $b->user?->email ?? '-',
+                'user' => $b->user,
+            ];
+        })->filter(fn ($b) => !empty($b->karyawan_id))->values();
+
+        // Ambil daftar SPG resmi sesuai menu Sales Promotion Girl (41 SPG)
+        $spgModels = Spg::with(['user.karyawan'])->orderBy('nama_spg')->get();
+        $spgList = $spgModels->map(function ($s) {
+            return (object) [
+                'spg_id' => $s->spg_id,
+                'karyawan_id' => $s->user?->karyawan?->karyawan_id,
+                'nama_spg' => $s->nama_spg,
+                'nama_karyawan' => $s->nama_spg,
+                'email' => $s->user?->email ?? '-',
+                'user' => $s->user,
+            ];
+        })->filter(fn ($s) => !empty($s->karyawan_id))->values();
+
+        // Mapping outlet ke petugas BC & SPG yang ditugaskan di outlet tersebut
+        $outletPetugasMap = [];
+        $outletsWithKaryawans = Outlet::with(['karyawans.user', 'karyawans.role'])->get();
+        foreach ($outletsWithKaryawans as $o) {
+            $bcAssigned = null;
+            $spgAssigned = null;
+            foreach ($o->karyawans as $k) {
+                $roleName = strtolower($k->role?->nama_role ?? $k->jabatan ?? '');
+                if (str_contains($roleName, 'beauty') || str_contains($roleName, 'bc')) {
+                    $bcAssigned = [
+                        'karyawan_id' => $k->karyawan_id,
+                        'nama' => $k->nama_karyawan,
+                        'email' => $k->user?->email ?? '-',
+                    ];
+                } elseif (str_contains($roleName, 'sales') || str_contains($roleName, 'spg')) {
+                    $spgAssigned = [
+                        'karyawan_id' => $k->karyawan_id,
+                        'nama' => $k->nama_karyawan,
+                        'email' => $k->user?->email ?? '-',
+                    ];
+                }
+            }
+            $outletPetugasMap[$o->outlet_id] = [
+                'bc' => $bcAssigned,
+                'spg' => $spgAssigned,
+            ];
+        }
 
         // Tentukan outlet yang terpilih secara default
         $defaultOutletId = old('outlet_id');
@@ -305,7 +366,7 @@ class PenjualanController extends Controller
 
         $initialStok = $defaultOutletId ? $this->getOutletStockCalculation((int) $defaultOutletId) : [];
 
-        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'bcList', 'spgList', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin', 'initialStok', 'defaultOutletId', 'namaRole'));
+        return view('penjualan.create', compact('outlet', 'produk', 'karyawan', 'bcList', 'spgList', 'outletPetugasMap', 'daftarHarga', 'outletTugasKhusus', 'karyawanLogin', 'initialStok', 'defaultOutletId', 'namaRole'));
     }
 
     public function store(Request $request)
@@ -423,9 +484,21 @@ class PenjualanController extends Controller
 
         if (in_array($namaRole, ['admin', 'supervisor'])) {
             if (! $bcId && ! $spgId && ! $request->filled('karyawan_id')) {
-                return back()->withInput()->withErrors([
-                    'petugas' => 'Silakan pilih minimal 1 petugas karyawan (1 BC dan/atau 1 SPG).',
-                ]);
+                // Ambil petugas karyawan outlet jika ada, atau login user
+                $karyawanOutlet = DB::table('karyawan_outlet')
+                    ->where('outlet_id', $validated['outlet_id'])
+                    ->first();
+                if ($karyawanOutlet) {
+                    $karyawanTemp = Karyawan::find($karyawanOutlet->karyawan_id);
+                    $roleTemp = strtolower($karyawanTemp?->role?->nama_role ?? $karyawanTemp?->jabatan ?? '');
+                    if (str_contains($roleTemp, 'beauty') || str_contains($roleTemp, 'bc')) {
+                        $bcId = $karyawanTemp->karyawan_id;
+                    } else {
+                        $spgId = $karyawanTemp->karyawan_id;
+                    }
+                } else {
+                    $bcId = $karyawanLogin?->karyawan_id;
+                }
             }
             if (! $bcId && ! $spgId && $request->filled('karyawan_id')) {
                 $karyawanTemp = Karyawan::find($request->input('karyawan_id'));
@@ -440,8 +513,14 @@ class PenjualanController extends Controller
             }
         } elseif (in_array($namaRole, ['beauty consultant', 'bc'])) {
             $bcId = $karyawanLogin?->karyawan_id;
+            if ($request->filled('spg_karyawan_id')) {
+                $spgId = (int) $request->input('spg_karyawan_id');
+            }
         } elseif (in_array($namaRole, ['sales promotion girl', 'spg'])) {
             $spgId = $karyawanLogin?->karyawan_id;
+            if ($request->filled('bc_karyawan_id')) {
+                $bcId = (int) $request->input('bc_karyawan_id');
+            }
         }
 
         // Hubungkan outlet ke karyawan BC & SPG yang dipilih agar penugasan sinkron
@@ -568,19 +647,59 @@ class PenjualanController extends Controller
         $produk = Produk::orderBy('nama_produk')->get();
         $karyawan = Karyawan::with('user')->orderBy('nama_karyawan')->get();
 
-        $bcList = Karyawan::whereHas('role', function ($q) {
-            $q->whereIn('nama_role', ['Beauty Consultant', 'BC']);
-        })->orWhereIn('jabatan', ['Beauty Consultant', 'BC'])
-            ->with('user')
-            ->orderBy('nama_karyawan')
-            ->get();
+        // Ambil daftar BC resmi sesuai menu Beauty Consultant (30 BC)
+        $bcModels = Bc::with(['user.karyawan'])->orderBy('nama_bc')->get();
+        $bcList = $bcModels->map(function ($b) {
+            return (object) [
+                'bc_id' => $b->bc_id,
+                'karyawan_id' => $b->user?->karyawan?->karyawan_id,
+                'nama_bc' => $b->nama_bc,
+                'nama_karyawan' => $b->nama_bc,
+                'email' => $b->user?->email ?? '-',
+                'user' => $b->user,
+            ];
+        })->filter(fn ($b) => !empty($b->karyawan_id))->values();
 
-        $spgList = Karyawan::whereHas('role', function ($q) {
-            $q->whereIn('nama_role', ['Sales Promotion Girl', 'SPG']);
-        })->orWhereIn('jabatan', ['Sales Promotion Girl', 'SPG'])
-            ->with('user')
-            ->orderBy('nama_karyawan')
-            ->get();
+        // Ambil daftar SPG resmi sesuai menu Sales Promotion Girl (41 SPG)
+        $spgModels = Spg::with(['user.karyawan'])->orderBy('nama_spg')->get();
+        $spgList = $spgModels->map(function ($s) {
+            return (object) [
+                'spg_id' => $s->spg_id,
+                'karyawan_id' => $s->user?->karyawan?->karyawan_id,
+                'nama_spg' => $s->nama_spg,
+                'nama_karyawan' => $s->nama_spg,
+                'email' => $s->user?->email ?? '-',
+                'user' => $s->user,
+            ];
+        })->filter(fn ($s) => !empty($s->karyawan_id))->values();
+
+        // Mapping outlet ke petugas BC & SPG
+        $outletPetugasMap = [];
+        $outletsWithKaryawans = Outlet::with(['karyawans.user', 'karyawans.role'])->get();
+        foreach ($outletsWithKaryawans as $o) {
+            $bcAssigned = null;
+            $spgAssigned = null;
+            foreach ($o->karyawans as $k) {
+                $roleName = strtolower($k->role?->nama_role ?? $k->jabatan ?? '');
+                if (str_contains($roleName, 'beauty') || str_contains($roleName, 'bc')) {
+                    $bcAssigned = [
+                        'karyawan_id' => $k->karyawan_id,
+                        'nama' => $k->nama_karyawan,
+                        'email' => $k->user?->email ?? '-',
+                    ];
+                } elseif (str_contains($roleName, 'sales') || str_contains($roleName, 'spg')) {
+                    $spgAssigned = [
+                        'karyawan_id' => $k->karyawan_id,
+                        'nama' => $k->nama_karyawan,
+                        'email' => $k->user?->email ?? '-',
+                    ];
+                }
+            }
+            $outletPetugasMap[$o->outlet_id] = [
+                'bc' => $bcAssigned,
+                'spg' => $spgAssigned,
+            ];
+        }
 
         $daftarHarga = DB::table('harga_produk')
             ->orderByDesc('harga_produk_id')
@@ -603,6 +722,7 @@ class PenjualanController extends Controller
             'karyawan',
             'bcList',
             'spgList',
+            'outletPetugasMap',
             'produk',
             'daftarHarga',
             'transaksiDetails',
@@ -704,8 +824,13 @@ class PenjualanController extends Controller
         }
 
         DB::transaction(function () use ($request, $penjualan, $validated, $outlet, $total_harga, $items_to_insert) {
-            $bcId = $request->filled('bc_karyawan_id') ? (int) $request->input('bc_karyawan_id') : $penjualan->bc_karyawan_id;
-            $spgId = $request->filled('spg_karyawan_id') ? (int) $request->input('spg_karyawan_id') : $penjualan->spg_karyawan_id;
+            $bcId = $request->has('bc_karyawan_id')
+                ? ($request->filled('bc_karyawan_id') ? (int) $request->input('bc_karyawan_id') : null)
+                : $penjualan->bc_karyawan_id;
+
+            $spgId = $request->has('spg_karyawan_id')
+                ? ($request->filled('spg_karyawan_id') ? (int) $request->input('spg_karyawan_id') : null)
+                : $penjualan->spg_karyawan_id;
 
             if ($bcId) {
                 $bcKaryawan = Karyawan::find($bcId);

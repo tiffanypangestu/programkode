@@ -30,9 +30,26 @@
         <tr>
             <td style="font-weight: bold; color: #374151; padding: 4px 0;">Alamat</td>
             <td style="padding: 4px 0;">: {{ $penjualan->outlet->alamat_outlet ?? '-' }}</td>
+            <td style="font-weight: bold; color: #374151; padding: 4px 0;">Petugas BC</td>
+            <td style="padding: 4px 0;">:
+                @if ($penjualan->bcKaryawan)
+                    {{ $penjualan->bcKaryawan->nama_karyawan }} ({{ $penjualan->bcKaryawan->user->email ?? '-' }})
+                @else
+                    -
+                @endif
+            </td>
         </tr>
-
         <tr>
+            <td style="font-weight: bold; color: #374151; padding: 4px 0;">Petugas SPG</td>
+            <td style="padding: 4px 0;" colspan="3">:
+                @if ($penjualan->spgKaryawan)
+                    {{ $penjualan->spgKaryawan->nama_karyawan }} ({{ $penjualan->spgKaryawan->user->email ?? '-' }})
+                @elseif ($penjualan->karyawan)
+                    {{ $penjualan->karyawan->nama_karyawan }} ({{ $penjualan->karyawan->user->email ?? '-' }})
+                @else
+                    -
+                @endif
+            </td>
         </tr>
     </table>
 
